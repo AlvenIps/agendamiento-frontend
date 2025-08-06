@@ -112,7 +112,7 @@
                       <button @click="openDetailsModal(cita)" class="btn btn-sm btn-outline-primary" title="Detalles"><i class="bi bi-info-circle-fill"></i></button>
                       <button v-if="cita.fotoPublicId" @click="handleVerOrden(cita)" class="btn btn-sm btn-outline-info" title="Ver"><i class="bi bi-eye-fill"></i></button>
                       <template v-if="cita.nombreSede === authStore.user?.sede">
-                        <button v-if="cita.estado === 'AGENDADA'" @click="openEditModal(cita)" class="btn btn-sm btn-outline-warning" title="Reagendar"><i class="bi bi-pencil-fill"></i></button>
+                        <button @click="openEditModal(cita)" class="btn btn-sm btn-outline-warning" title="Reagendar"><i class="bi bi-pencil-fill"></i></button>
                         <button v-if="cita.estado === 'AGENDADA'" @click="handleCancelarCita(cita.id)" class="btn btn-sm btn-outline-danger" title="Cancelar"><i class="bi bi-trash-fill"></i></button>
                         <button v-if="cita.estado === 'AGENDADA'" @click="marcarComoCompletada(cita.id)" class="btn btn-sm btn-outline-success" title="Marcar como Cmpletada">
                           <i class="bi bi-check-lg"></i>
@@ -161,6 +161,7 @@
                         id="reagendarFecha"
                         class="form-control"
                         v-model="reagendarFechaSeleccionada"
+                        :disabled="!['AGENDADA', 'NO_ASISTIO'].includes(citaParaEditar?.estado || '')"
                       />
                     </div>
                     <div class="col-md-6" v-if="reagendarFechaSeleccionada">
@@ -196,11 +197,19 @@
                       </label>
                       <input type="number" id="valorCopago" class="form-control" v-model.number="editFormData.valorCopago" placeholder="Ej: 15000">
                     </div>
-                    <div class="col-12">
+                    <div class="col-12 col-md-6">
                       <label for="numAutorizacion" class="form-label">Número de Autorización (si aplica)
                         <span v-if="arePrepagadaFieldsRequired" class="text-danger fw-bold">*</span>
                       </label>
                       <input type="text" id="numAutorizacion" class="form-control" v-model="editFormData.numeroAutorizacion">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label for="estadoResultados" class="form-label">Estado de Resultados</label>
+                      <select id="estadoResultados" class="form-select" v-model="editFormData.estadoResultados">
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="PARCIAL">Parcial</option>
+                        <option value="ENTREGADOS">Entregados</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -281,8 +290,9 @@ import {
   getAvailableTimes
 } from '@/services/citasService.ts';
 import type { CitaResponse, CitaUpdate } from '@/types';
+import { useInputFilter } from '@/composables/useInputFilter.ts';
 import { useAuthStore } from '@/stores/auth.ts';
-import { LISTA_SEDES } from '@/config/sedes.ts'
+import { LISTA_SEDES } from '@/config/sedes.ts';
 
 const authStore = useAuthStore();
 
@@ -317,6 +327,13 @@ const isReagendarLoading = ref(false);
 const isDetailsModalVisible = ref(false);
 const citaParaDetalles = ref<CitaResponse | null>(null);
 
+// Definimos los patrones de limpieza que necesitamos.
+const soloNumerosRegex = /[^0-9]/g; // Solo permite números
+const alfanumericoRegex = /[^a-zA-Z0-9]/g; // Permite letras y números
+useInputFilter(editFormData, 'valorServicio', soloNumerosRegex);
+useInputFilter(editFormData, 'valorCopago', soloNumerosRegex);
+useInputFilter(editFormData, 'numeroAutorizacion', alfanumericoRegex);
+
 watch(reagendarFechaSeleccionada, async (newDate) => {
   if (!newDate || !citaParaEditar.value) {
     reagendarHorariosDisponibles.value = [];
@@ -342,14 +359,23 @@ const isSaveDisabled = computed(() => {
   if (isEditLoading.value) {
     return true;
   }
-  const isReagendado = reagendarFechaSeleccionada.value && reagendarHoraSeleccionada.value;
-  const hasValorServicio = editFormData.valorServicio != null;
-  const hasValorCopago = editFormData.valorCopago != null;
-  const hasNumeroAutorizacion = editFormData.numeroAutorizacion != null && editFormData.numeroAutorizacion !== '';
-  const seHaHechoUnCambioValido = isReagendado || hasValorServicio || hasValorCopago || hasNumeroAutorizacion;
+  if (!citaParaEditar.value) {
+    return true;
+  }
+  // Condición 1: ¿Se ha seleccionado una nueva fecha y hora para reagendar?
+  const hasReagendado = reagendarFechaSeleccionada.value && reagendarHoraSeleccionada.value;
+  const normalize = (value: any) => (value === null || value === undefined) ? '' : String(value);
 
-  // (3) El botón debe estar DESHABILITADO si NO se ha hecho ningún cambio válido.
-  return !seHaHechoUnCambioValido;
+  // Comparamos el estado actual del formulario (editFormData) con el estado original (citaParaEditar).
+  const hasFormDataChanged =
+    normalize(editFormData.valorServicio) !== normalize(citaParaEditar.value.valorServicio) ||
+    normalize(editFormData.valorCopago) !== normalize(citaParaEditar.value.valorCopago) ||
+    normalize(editFormData.numeroAutorizacion) !== normalize(citaParaEditar.value.numeroAutorizacion) ||
+    normalize(editFormData.estadoResultados) !== normalize(citaParaEditar.value.estadoResultados);
+
+
+  // El botón debe estar DESHABILITADO si NO se ha reagendado Y NO ha cambiado ningún dato del formulario.
+  return !hasReagendado && !hasFormDataChanged;
 });
 // Nueva propiedad computada para la validación de TIPO DE ATENCION
 // Devuelve 'true' si la cita que se está editando es de tipo prepagada.
@@ -403,6 +429,7 @@ function openEditModal(cita: CitaResponse) {
   editFormData.valorServicio = cita.valorServicio ?? undefined;
   editFormData.valorCopago = cita.valorCopago ?? undefined;
   editFormData.numeroAutorizacion = cita.numeroAutorizacion ?? '';
+  editFormData.estadoResultados = cita.estadoResultados;
   isEditModalVisible.value = true;
 }
 
@@ -413,6 +440,7 @@ function closeEditModal() {
   reagendarFechaSeleccionada.value = '';
   reagendarHorariosDisponibles.value = [];
   reagendarHoraSeleccionada.value = '';
+  selectedDate.value = '';
 }
 
 async function handleConfirmUpdate() {

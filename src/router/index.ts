@@ -1,15 +1,16 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore} from '@/stores/auth.ts' // store de Pinia
+import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore} from '@/stores/auth.ts'; // store de Pinia
 
 // componentes de vistas
-import AgendarCitaView  from '@/views/publicas/AgendarCitaView.vue'
-import LoginView from '@/views/privadas/LoginView.vue'
-import AuthCallbackView from '@/views/privadas/AuthCallbackView.vue'
-import DashboardLayout from '@/layouts/DashboardLayout.vue'
-import DashboardHomeView from '@/views/privadas/DashboardHomeView.vue'
-import PanelClientesView from '@/views/privadas/PanelClientesView.vue'
-import LogoutCallbackView from '@/views/privadas/LogoutCallbackView.vue'
-import EstadisticasView from '@/views/privadas/EstadisticasView.vue'
+import AgendarCitaView  from '@/views/publicas/AgendarCitaView.vue';
+import LoginView from '@/views/privadas/LoginView.vue';
+import AuthCallbackView from '@/views/privadas/AuthCallbackView.vue';
+import DashboardLayout from '@/layouts/DashboardLayout.vue';
+import DashboardHomeView from '@/views/privadas/DashboardHomeView.vue';
+import PanelClientesView from '@/views/privadas/PanelClientesView.vue';
+import LogoutCallbackView from '@/views/privadas/LogoutCallbackView.vue';
+import EstadisticasView from '@/views/privadas/EstadisticasView.vue';
+import ReportesView from '@/views/privadas/ReportesView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -54,7 +55,12 @@ const router = createRouter({
           path: '/estadisticas',
           name: 'estadisticas',
           component: EstadisticasView
-        }
+        },
+        {
+          path: '/reportes',
+          name: 'reportes',
+          component: ReportesView
+        },
       ]
     },
     {

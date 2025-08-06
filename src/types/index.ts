@@ -17,6 +17,8 @@ export type FormaPago =
   | 'DATAFONO'
   | 'NO_DEFINIDO';
 
+export type EstadoResultados = 'ENTREGADOS' | 'PENDIENTE' | 'PARCIAL';
+
 export interface CitaRequest {
   tipoIdentificacion: string;
   numeroIdentificacion: string;
@@ -62,6 +64,7 @@ export interface CitaResponse {
   valorServicio?: number | null; // En JSON BigDecimal llega como number
   valorCopago?: number | null;
   numeroAutorizacion?: string | null;
+  estadoResultados: EstadoResultados;
 }
 
 export interface CitaUpdate {
@@ -71,6 +74,7 @@ export interface CitaUpdate {
   valorServicio?: number;
   valorCopago?: number;
   numeroAutorizacion?: string;
+  estadoResultados?: EstadoResultados;
 }
 
 export interface ClienteAgenda {

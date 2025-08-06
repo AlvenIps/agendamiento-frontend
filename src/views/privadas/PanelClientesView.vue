@@ -172,6 +172,8 @@ import type { ClienteAgenda, Cliente, ClienteUpdate } from '@/types';
 import { useAuthStore } from '@/stores/auth.ts';
 import { LISTA_SEDES } from '@/config/sedes.ts';
 import { isAxiosError } from 'axios';
+import { useInputFilter } from '@/composables/useInputFilter.ts';
+
 
 
 
@@ -190,6 +192,16 @@ const searchId = ref(''); // buscador por id de cliente
 const isEditModalVisible = ref(false);
 const clienteParaEditar = ref<ClienteAgenda | null>(null);
 const editFormData = reactive<ClienteUpdate>({});
+
+// Definimos los patrones de limpieza que necesitamos.
+const soloNumerosRegex = /[^0-9]/g; // Solo permite números
+const soloLetrasRegex = /[^a-zA-Z\sñÑáéíóúÁÉÍÓÚ]/g;
+useInputFilter(editFormData, 'nombres', soloLetrasRegex);
+useInputFilter(editFormData, 'apellidos', soloLetrasRegex);
+useInputFilter(editFormData, 'celular', soloNumerosRegex);
+
+
+
 
 const clientesFiltrados = computed(() => {
   if (!selectedSedeFilter.value) {
@@ -328,6 +340,17 @@ function handleEmailClick(cliente: ClienteAgenda) {
   const url = `mailto:${cliente.email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
   window.location.href = url;
 }
+
+watch(searchId, (newValue) => {
+  // Usamos una expresión regular para encontrar y reemplazar todos los caracteres
+  // que NO son dígitos (\D).
+  const soloNumeros = newValue.replace(/\D/g, '');
+
+  // Actualizamos el valor solo si ha cambiado, para evitar un bucle infinito.
+  if (searchId.value !== soloNumeros) {
+    searchId.value = soloNumeros;
+  }
+});
 
 // se ejecuta cuando el componente se carga por primera vez
 onMounted(() => {

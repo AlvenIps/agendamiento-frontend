@@ -46,6 +46,12 @@ function handleLogout() {
             <span class="link-text">Estadísticas</span>
           </RouterLink>
         </li>
+        <li class="nav-item">
+          <RouterLink :to="{ name: 'reportes' }" class="nav-link text-white" v-if="authStore.isAuditor">
+            <i class="bi bi-file-earmark-text-fill"></i>
+            <span class="link-text">Reportes</span>
+          </RouterLink>
+        </li>
         <!-- Aquí irán futuros enlaces -->
       </ul>
 
