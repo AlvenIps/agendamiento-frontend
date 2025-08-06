@@ -1,14 +1,23 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { getHistorialCliente } from '@/services/reportsService.ts';
+import { ref, watch, onMounted } from 'vue';
+import { getHistorialCliente, exportarReporteCitasExcel } from '@/services/reportsService.ts';
 import type { HistoriaClienteCompleto } from '@/types/indexReports.ts';
 import { isAxiosError } from 'axios';
+import { useAuthStore } from '@/stores/auth.ts';
+const authStore = useAuthStore();
+import { LISTA_SEDES } from '@/config/sedes.ts'
 
 const searchId = ref('');
 const isLoading = ref(false);
 const errorMessage = ref<string | null>(null);
 const historialReporte = ref<HistoriaClienteCompleto | null>(null);
 const currentPage = ref(0); // pagina actual
+
+// ESTADO PARA REPORTE DE EXCEL
+const reporteFechaInicio = ref('');
+const reporteFechaFin = ref('');
+const reporteSede = ref('');
+const isExporting = ref(false);
 
 async function handleSearch(page = 0) {
   if (!searchId.value.trim()) {
@@ -35,6 +44,37 @@ async function handleSearch(page = 0) {
   }
 }
 
+async function handleExportarReporte() {
+  if (!reporteFechaInicio.value || !reporteFechaFin.value) {
+    alert("Por favor, selecciona un rango de fechas para el reporte.");
+    return;
+  }
+  isExporting.value = true;
+  try {
+    const blob = await exportarReporteCitasExcel(
+      reporteFechaInicio.value,
+      reporteFechaFin.value,
+      reporteSede.value,
+    );
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const fileName = `Reporte_citas_${reporteFechaInicio.value}_a_${reporteFechaFin.value}.xlsx`;
+    link.setAttribute('download', fileName);
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url); // libera memoria
+
+  } catch (e) {
+    console.error("Error al generar el reporte Excel:", e);
+    alert("No se pudo generar el reporte. Revisa la consola para más detalles.");
+  } finally {
+    isExporting.value = false;
+  }
+}
+
 watch(searchId, (newValue) => {
   // Usamos una expresión regular para encontrar y reemplazar todos los caracteres
   // que NO son dígitos (\D).
@@ -45,13 +85,57 @@ watch(searchId, (newValue) => {
     searchId.value = soloNumeros;
   }
 });
+// fechas por defecto a cargar, HACE 30 DIAS
+onMounted(() => {
+  const fin = new Date();
+  const inicio = new Date();
+  inicio.setDate(fin.getDate() - 30);
+  const finStr = fin.toISOString().split('T')[0];
+  const inicioStr = inicio.toISOString().split('T')[0];
+
+  reporteFechaInicio.value = inicioStr;
+  reporteFechaFin.value = finStr;
+});
 </script>
 
 <template>
   <div >
     <h2 class="mb-4">Panel de Reportes</h2>
+    <!-- SECCIÓN 1 Para el Reporte de Excel --- -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Reporte de Citas por Período (Excel)</h5>
+        <p class="card-subtitle mb-3 text-muted">
+          Genera un reporte en formato Excel con el detalle de las citas en un rango de fechas.
+        </p>
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-4">
+            <label for="reporteFechaInicio" class="form-label fw-bold">Fecha de Inicio</label>
+            <input type="date" id="reporteFechaInicio" class="form-control" v-model="reporteFechaInicio">
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="reporteFechaFin" class="form-label fw-bold">Fecha de Fin</label>
+            <input type="date" id="reporteFechaFin" class="form-control" v-model="reporteFechaFin">
+          </div>
+          <div v-if="authStore.isAuditor" class="col-12 col-md-4">
+            <label for="reporteSede" class="form-label fw-bold">Sede (Opcional)</label>
+            <select id="reporteSede" class="form-select" v-model="reporteSede">
+              <option value="">Todas las sedes</option>
+              <option v-for="sede in LISTA_SEDES" :key="sede.id" :value="sede.id">{{ sede.nombre }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-3 text-end">
+          <button class="btn btn-success" @click="handleExportarReporte" :disabled="isExporting">
+            <span v-if="isExporting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <i v-else class="bi bi-file-earmark-excel-fill me-2"></i>
+            Generar y Descargar
+          </button>
+        </div>
+      </div>
+    </div>
 
-    <!-- (4) Panel de Búsqueda -->
+    <!-- SECCIÓN 2 Panel de Búsqueda -->
     <div class="card mb-4">
       <div class="card-body">
         <h5 class="card-title">Historial de Citas por Cliente</h5>
