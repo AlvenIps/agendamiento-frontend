@@ -220,7 +220,7 @@ const tipoAtencionHistoricoChartData = computed(() => {
     }],
   };
 });
-// ¡NUEVA! Propiedad computada para el gráfico de estado histórico
+// Propiedad computada para el gráfico de estado histórico
 const estadoHistoricoChartData = computed(() => {
   if (!conteoEstadoHistorico.value) return { labels: [], datasets: [] };
   const labels = conteoEstadoHistorico.value.map(item => item.estado);
@@ -236,7 +236,7 @@ const estadoHistoricoChartData = computed(() => {
   });
   return { labels, datasets: [{ data, backgroundColor: backgroundColors, hoverOffset: 4 }] };
 });
-// --- ¡NUEVAS PROPIEDADES COMPUTADAS! ---
+// --- NUEVAS PROPIEDADES COMPUTADAS ---
 const rendimientoSedeGlobalChartData = computed(() => {
   if (!rendimientoSedesGlobal.value) return { labels: [], datasets: [] };
   const labels = rendimientoSedesGlobal.value.map(item => item.nombreSede);
@@ -335,7 +335,7 @@ const globalOptions = createFinancialChartOptions(rendimientoSedesGlobal, 'total
 const tipoAtencionHistoricoOptions = createFinancialChartOptions(tipoAtencionHistorico, 'total');
 const tipoAtencionGlobalOptions = createFinancialChartOptions(tipoAtencionGlobal, 'total');
 
-// (4) --- NUEVA FUNCIÓN AYUDANTE para formatear moneda ---
+// --- NUEVA FUNCIÓN AYUDANTE para formatear moneda ---
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
