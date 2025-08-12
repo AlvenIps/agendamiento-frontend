@@ -2,10 +2,10 @@
 import { ref, watch, onMounted } from 'vue';
 import { getHistorialCliente, exportarReporteCitasExcel } from '@/services/reportsService.ts';
 import type { HistoriaClienteCompleto } from '@/types/indexReports.ts';
-import { isAxiosError } from 'axios';
 import { useAuthStore } from '@/stores/auth.ts';
 const authStore = useAuthStore();
-import { LISTA_SEDES } from '@/config/sedes.ts'
+import { LISTA_SEDES } from '@/config/sedes.ts';
+import { formatCurrency } from '@/utils/formatter.ts';
 
 const searchId = ref('');
 const isLoading = ref(false);
@@ -34,11 +34,7 @@ async function handleSearch(page = 0) {
     historialReporte.value = data;
   } catch (error) {
     console.error(`Error al buscar el historial para ${searchId.value}:`, error);
-    if (isAxiosError(error) && error.response?.status === 404) {
-      errorMessage.value = `No se encontró ningún cliente con la identificación "${searchId.value}".`;
-    } else {
-      errorMessage.value = "Ocurrió un error al generar el reporte.";
-    }
+    errorMessage.value = (error as Error).message;
   } finally {
     isLoading.value = false;
   }
@@ -65,11 +61,10 @@ async function handleExportarReporte() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    window.URL.revokeObjectURL(url); // libera memoria
+    window.URL.revokeObjectURL(url);
 
   } catch (e) {
-    console.error("Error al generar el reporte Excel:", e);
-    alert("No se pudo generar el reporte. Revisa la consola para más detalles.");
+    alert((e as Error).message);
   } finally {
     isExporting.value = false;
   }
@@ -100,7 +95,7 @@ onMounted(() => {
 
 <template>
   <div >
-    <h2 class="mb-4">Panel de Reportes</h2>
+    <h2 class="mb-4 green-alven">Panel de Reportes</h2>
     <!-- SECCIÓN 1 Para el Reporte de Excel --- -->
     <div class="card mb-4">
       <div class="card-body">
@@ -165,59 +160,67 @@ onMounted(() => {
       {{ errorMessage }}
     </div>
 
-    <div v-else-if="historialReporte" class="card">
+    <div v-if="historialReporte" class="card">
       <div class="card-header">
         <h5>Historial para: <strong>{{ historialReporte.nombreCompleto }}</strong></h5>
         <p class="mb-0 text-muted">{{ historialReporte.tipoIdentificacion }} {{ historialReporte.numeroIdentificacion }}</p>
       </div>
-      <div class="card-body table-responsive">
-        <p class="text-muted">
-          Mostrando {{ historialReporte.historialCitas.numberOfElements }} de {{ historialReporte.historialCitas.totalElements }} citas.
-          Página {{ historialReporte.historialCitas.number + 1 }} de {{ historialReporte.historialCitas.totalPages }}.
-        </p>
-        <table class="table table-striped table-hover">
-          <thead class="table-dark">
-          <tr>
-            <th>ID Cita</th>
-            <th>Fecha y Hora</th>
-            <th>Estado</th>
-            <th>Tipo Atención</th>
-            <th>Exámenes</th>
-            <th>Estado Resultados</th>
-            <th>Valor Servicio</th>
-            <th>Valor Copago</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="cita in historialReporte.historialCitas.content" :key="cita.idCita">
-            <td>{{ cita.idCita }}</td>
-            <td><span class="green-alven">{{ cita.fechaHoraCita }}</span></td>
-            <td><span class="badge bg-info">{{ cita.estadoCita }}</span></td>
-            <td>{{ cita.tipoAtencion || 'N/A' }}</td>
-            <td>{{ cita.examenes }}</td>
-            <td><span class="badge bg-secondary">{{ cita.estadoResultados }}</span></td>
-            <td>{{ cita.valorServicio || 0 }}</td>
-            <td>{{ cita.valorCopago || 0 }}</td>
-          </tr>
-          </tbody>
-        </table>
+      <div v-if="historialReporte.historialCitas.content.length > 0">
+        <div class="card-body table-responsive">
+          <p class="text-muted">
+            Mostrando {{ historialReporte.historialCitas.numberOfElements }} de {{ historialReporte.historialCitas.totalElements }} citas.
+            Página {{ historialReporte.historialCitas.number + 1 }} de {{ historialReporte.historialCitas.totalPages }}.
+          </p>
+          <table class="table table-striped table-hover">
+            <thead class="table-dark">
+            <tr>
+              <th>ID Cita</th>
+              <th>Fecha y Hora</th>
+              <th>Estado</th>
+              <th>Tipo Atención</th>
+              <th>Exámenes</th>
+              <th>Estado Resultados</th>
+              <th>Valor Servicio</th>
+              <th>Valor Copago</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="cita in historialReporte.historialCitas.content" :key="cita.idCita">
+              <td>{{ cita.idCita }}</td>
+              <td><span class="green-alven">{{ cita.fechaHoraCita }}</span></td>
+              <td><span class="badge bg-info">{{ cita.estadoCita }}</span></td>
+              <td>{{ cita.tipoAtencion || 'N/A' }}</td>
+              <td>{{ cita.examenes }}</td>
+              <td><span class="badge bg-secondary">{{ cita.estadoResultados }}</span></td>
+              <td>{{ formatCurrency(cita.valorServicio) }}</td>
+              <td>{{ formatCurrency(cita.valorCopago) }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- (6) Controles de Paginación -->
+        <div class="card-footer d-flex justify-content-end gap-2">
+          <button
+            class="btn btn-secondary"
+            :disabled="historialReporte.historialCitas.first"
+            @click="handleSearch(currentPage - 1)">
+            Anterior
+          </button>
+          <button
+            class="btn btn-secondary"
+            :disabled="historialReporte.historialCitas.last"
+            @click="handleSearch(currentPage + 1)">
+            Siguiente
+          </button>
+        </div>
       </div>
-      <!-- (6) Controles de Paginación -->
-      <div class="card-footer d-flex justify-content-end gap-2">
-        <button
-          class="btn btn-secondary"
-          :disabled="historialReporte.historialCitas.first"
-          @click="handleSearch(currentPage - 1)">
-          Anterior
-        </button>
-        <button
-          class="btn btn-secondary"
-          :disabled="historialReporte.historialCitas.last"
-          @click="handleSearch(currentPage + 1)">
-          Siguiente
-        </button>
+      <div v-else class="card-body">
+        <div class="alert alert-info text-center m-0">
+          Este cliente no tiene un historial de citas para mostrar.
+        </div>
       </div>
     </div>
+
   </div>
 </template>
 

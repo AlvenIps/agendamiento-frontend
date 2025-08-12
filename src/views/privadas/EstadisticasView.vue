@@ -347,7 +347,7 @@ function formatCurrency(value: number) {
 
 <template>
   <div>
-    <h2 class="mb-4">Panel de Estadísticas y Reportes</h2>
+    <h2 class="mb-4 green-alven">Panel de Estadísticas</h2>
 
     <div v-if="isLoading" class="text-center my-5">
       <div class="spinner-border text-primary" role="status"></div>
@@ -562,5 +562,8 @@ function formatCurrency(value: number) {
   width: 100%;
   flex-grow: 1;
   margin-top: auto;
+}
+.green-alven {
+  color: #238636;
 }
 </style>

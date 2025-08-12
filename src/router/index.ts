@@ -11,6 +11,7 @@ import PanelClientesView from '@/views/privadas/PanelClientesView.vue';
 import LogoutCallbackView from '@/views/privadas/LogoutCallbackView.vue';
 import EstadisticasView from '@/views/privadas/EstadisticasView.vue';
 import ReportesView from '@/views/privadas/ReportesView.vue';
+import AuditView from '@/views/privadas/AuditView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -61,6 +62,11 @@ const router = createRouter({
           name: 'reportes',
           component: ReportesView
         },
+        {
+          path: '/logs',
+          name: 'logs',
+          component: AuditView
+        }
       ]
     },
     {

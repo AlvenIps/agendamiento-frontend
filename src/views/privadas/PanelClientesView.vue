@@ -6,7 +6,7 @@
           <div class="d-flex justify-content-center">
             <h2 class="card-tittle text-center fw-bold mb-3 blue-alven">Clientes</h2>
           </div>
-          <h2 class="mb-3">Registro de Clientes</h2>
+          <h2 class="mb-3 green-alven">Registro de Clientes</h2>
           <!-- Panel de Control -->
           <div class="card mb-4 overflow-auto">
             <div class="card-body filter-panel-body flex-wrap align-items-center gap-3">
@@ -171,11 +171,7 @@ import { mostrarClientesPorFecha, buscarCliente, updateCliente } from '@/service
 import type { ClienteAgenda, Cliente, ClienteUpdate } from '@/types';
 import { useAuthStore } from '@/stores/auth.ts';
 import { LISTA_SEDES } from '@/config/sedes.ts';
-import { isAxiosError } from 'axios';
 import { useInputFilter } from '@/composables/useInputFilter.ts';
-
-
-
 
 const authStore = useAuthStore();
 
@@ -245,9 +241,8 @@ async function fetchClientes(filtro: string) {
   try {
     const data = await mostrarClientesPorFecha(fechaConsultar);
     clientes.value = data;
-  } catch (e) {
-    console.error(`Error al cargar los clientes para la fecha ${fechaConsultar}:`,e);
-    errorMessage.value = "No se pudieron cargar los datos de los clientes.";
+  } catch (error) {
+    errorMessage.value = (error as Error).message;
     clientes.value = [];
   } finally {
     isLoading.value = false;
@@ -269,13 +264,8 @@ async function handleSearchById() {
     };
     clientes.value = [clienteForTabla]; // se reemplaza la lista de la tabla con este cliente solito
   } catch (error) {
-    if (isAxiosError(error) && error.response?.status === 404) {
-      clientes.value = [];
-      errorMessage.value = `No se encontró ningún cliente con identificación ${searchId.value}`;
-    } else {
-      console.error("Error al buscar el cliente:", error);
-      errorMessage.value = "Ocurrió un error al realizar la búsqueda.";
-    }
+    errorMessage.value = (error as Error).message;
+    clientes.value = [];
   } finally {
     isLoading.value = false;
   }
@@ -319,9 +309,8 @@ async function handleConfirmUpdate() {
     alert("Cliente actualizado con éxito.");
     closeEditModal();
     fetchClientes(selectedDate.value);
-  } catch (e) {
-    console.error(`Error al buscar el cliente: ${e}`);
-    alert(`Error al buscar el cliente`);
+  } catch (error) {
+    alert((error as Error).message);
   } finally {
     isLoading.value = false;
   }

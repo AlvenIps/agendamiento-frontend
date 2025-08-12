@@ -7,7 +7,7 @@
               <h2 class="card-tittle text-center fw-bold mb-3 blue-alven">Agendas</h2>
             </div>
             <div>
-              <h2 class="mb-3">Agenda de Citas</h2>
+              <h2 class="mb-3 green-alven">Agenda de Citas</h2>
               <!-- Panel de Controles -->
               <div class="card mb-3 overflow-auto">
                 <div class="card-body filter-panel-body flex-wrap flex-lg-row align-items-center gap-3">
@@ -189,13 +189,13 @@
                   <div class="row g-3">
                     <div class="col-md-5">
                       <label for="valorServicio" class="form-label">Valor del Servicio</label>
-                      <input type="number" id="valorServicio" class="form-control" v-model.number="editFormData.valorServicio" placeholder="Ej: 50000" required>
+                      <input type="text" id="valorServicio" class="form-control" v-model="valorServicioFormatted" placeholder="Ej: 50000" required>
                     </div>
                     <div class="col-md-7">
                       <label for="valorCopago" class="form-label">Valor Copago (si aplica)
                         <span v-if="arePrepagadaFieldsRequired" class="text-danger fw-bold">*</span>
                       </label>
-                      <input type="number" id="valorCopago" class="form-control" v-model.number="editFormData.valorCopago" placeholder="Ej: 15000">
+                      <input type="text" id="valorCopago" class="form-control" v-model="valorCopagoFormatted" placeholder="Ej: 15000">
                     </div>
                     <div class="col-12 col-md-6">
                       <label for="numAutorizacion" class="form-label">Número de Autorización (si aplica)
@@ -262,8 +262,8 @@
               <div v-if="citaParaDetalles.valorServicio || citaParaDetalles.valorCopago || citaParaDetalles.numeroAutorizacion">
                 <h6 class="text-success">Datos de Cotización</h6>
                 <ul class="list-group list-group-flush">
-                  <li v-if="citaParaDetalles.valorServicio" class="list-group-item"><strong>Valor Servicio:</strong> ${{ citaParaDetalles.valorServicio }}</li>
-                  <li v-if="citaParaDetalles.valorCopago" class="list-group-item"><strong>Valor Copago:</strong> ${{ citaParaDetalles.valorCopago }}</li>
+                  <li v-if="citaParaDetalles.valorServicio" class="list-group-item"><strong>Valor Servicio:</strong> {{ formatCurrency(citaParaDetalles.valorServicio) }}</li>
+                  <li v-if="citaParaDetalles.valorCopago" class="list-group-item"><strong>Valor Copago:</strong> {{ formatCurrency(citaParaDetalles.valorCopago) }}</li>
                   <li v-if="citaParaDetalles.numeroAutorizacion" class="list-group-item"><strong>N° Autorización:</strong> {{ citaParaDetalles.numeroAutorizacion }}</li>
 
                 </ul>
@@ -293,6 +293,7 @@ import type { CitaResponse, CitaUpdate } from '@/types';
 import { useInputFilter } from '@/composables/useInputFilter.ts';
 import { useAuthStore } from '@/stores/auth.ts';
 import { LISTA_SEDES } from '@/config/sedes.ts';
+import { formatCurrency } from '@/utils/formatter';
 
 const authStore = useAuthStore();
 
@@ -400,12 +401,11 @@ async function fetchCitas(filtro: string) {
   try {
     const data = await getCitasPorFecha(fechaAConsultar, selectedStatus.value);
     todasLasCitas.value = data;
-  } catch (e) {
-    console.error("Error al cargar las citas: ",e);
-    errorMessage.value = "No se pudieron cargar las citas, intentalo mas tarde";
-    todasLasCitas.value = []; // limpiamos la lista
+  } catch (error) {
+    errorMessage.value = (error as Error).message;
+    todasLasCitas.value = [];
   } finally {
-    isLoading.value = false; // ocultamos el spinner
+    isLoading.value = false;
   }
 }
 
@@ -470,10 +470,9 @@ async function handleConfirmUpdate() {
     await actualizarCita(citaParaEditar.value.id, updatePayload);
     alert("Cita actualizada con éxito.");
     closeEditModal();
-    fetchCitas('today');
+    //fetchCitas('today');
   } catch (error) {
-    alert("No se pudo actualizar la cita.");
-    console.error("Error al actualizar la cita.", error);
+    alert((error as Error).message);
   } finally {
     isEditLoading.value = false;
   }
@@ -498,8 +497,7 @@ async function handleVerOrden(cita: CitaResponse) {
     const urlSegura = await getUrlOrdenMedica(cita.id);
     window.open(urlSegura, '_blank');
   } catch (error) {
-    alert("No se pudo obtener el enlace de la orden médica.");
-    console.error('No se pudo obtener el enlace a la foto',error);
+    alert((error as Error).message);
   }
 }
 
@@ -510,8 +508,7 @@ async function handleCancelarCita(citaId: number) {
       alert("Cita cancelada con éxito.");
       fetchCitas('today'); // Refrescamos la tabla
     } catch (error) {
-      alert("No se pudo cancelar la cita.");
-      console.error('No se pudo cancelar la cita',error);
+      alert((error as Error).message);
     }
   }
 }
@@ -524,10 +521,9 @@ async function marcarComoCompletada(citaId: number) {
   try {
     await actualizarCita(citaId, updateDTO);
     alert("Cita COMPLETADA con exito");
-    fetchCitas('today');
-  } catch (e) {
-    alert("No se pudo actualizar el estado de la cita.");
-    console.error('No se pudo actualizar la cita',e);
+    //fetchCitas('today');
+  } catch (error) {
+    alert((error as Error).message);
   }
 }
 async function marcarComoNoAsistio(citaId: number) {
@@ -537,12 +533,38 @@ async function marcarComoNoAsistio(citaId: number) {
   try {
     await actualizarCita(citaId, updateDTO);
     alert("Cita marcada como no asistió.");
-    fetchCitas('today');
-  } catch (e) {
-    alert("No se pudo actualizar el estado de la cita.");
-    console.error('No se pudo actualizar la cita',e);
+    //fetchCitas('today');
+  } catch (error) {
+    alert((error as Error).message);
   }
 }
+// formatear un input.
+const valorServicioFormatted = computed({
+  get() {
+    if (editFormData.valorServicio === undefined || editFormData.valorServicio === null) {
+      return '';
+    }
+    return editFormData.valorServicio.toLocaleString('es-CO');
+  },
+  set(newValue: string) {
+    // Limpia cualquier carácter que no sea un número.
+    const numericValue = parseInt(newValue.replace(/\D/g, ''), 10);
+    // Guarda el número puro en nuestro estado, o undefined si el campo está vacío.
+    editFormData.valorServicio = isNaN(numericValue) ? undefined : numericValue;
+  }
+});
+const valorCopagoFormatted = computed({
+  get() {
+    if (editFormData.valorCopago === undefined || editFormData.valorCopago === null) {
+      return '';
+    }
+    return editFormData.valorCopago.toLocaleString('es-CO');
+  },
+  set(newValue: string) {
+    const numericValue = parseInt(newValue.replace(/\D/g, ''), 10);
+    editFormData.valorCopago = isNaN(numericValue) ? undefined : numericValue;
+  }
+});
 
 // cada que el usuario cambia la fecha en el calendario
 function handleDateChange() {

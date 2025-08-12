@@ -1,5 +1,6 @@
 import apiClient from '@/services/apiClient.ts';
 import type { HistoriaClienteCompleto } from '@/types/indexReports.ts';
+import { extraerErrorApi } from '@/utils/errorUtils.ts';
 
 export async function getHistorialCliente(numeroIdentificacion: string, page: number, size: number): Promise<HistoriaClienteCompleto> {
   try {
@@ -10,9 +11,9 @@ export async function getHistorialCliente(numeroIdentificacion: string, page: nu
     const response = await apiClient.get<HistoriaClienteCompleto>(
       `/reports/historial/${numeroIdentificacion}`, { params });
     return response.data;
-  } catch (e) {
-    console.error(`Error al obtener el historial para el cliente ${numeroIdentificacion}`, e);
-    throw e;
+  } catch (error) {
+    const specificMessage = extraerErrorApi(error, 'Cliente no encontrado.');
+    throw new Error(specificMessage);
   }
 }
 export async function exportarReporteCitasExcel(fechaInicio: string,

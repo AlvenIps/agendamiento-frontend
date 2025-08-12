@@ -4,6 +4,7 @@ import type { CitaRequest, CitaResponse } from '@/types';
 import { agendarNuevaCita, verificarCliente, getAvailableTimes } from '@/services/citasService.ts';
 import { useInputFilter } from '@/composables/useInputFilter.ts';
 import html2canvas from 'html2canvas' // convierte html a imagen;
+import { extraerErrorApi } from '@/utils/errorUtils.ts';
 
 // ESTADO DEL COMPONENTE
 const initialState: CitaRequest = {
@@ -105,8 +106,7 @@ async function handleVerification() {
     clientExists.value = existe;
     step.value = 2; // siguiente paso del formulario
   } catch (error) {
-    console.error('Error durante la verificación del cliente:', error);
-    errorMessage.value = 'Ocurrió un error al verificar. Por favor, intenta de nuevo.';
+    errorMessage.value = (error as Error).message;
   } finally {
     isLoading.value = false;
   }
@@ -121,7 +121,7 @@ async function handleSubmit() {
     step.value = 3;
   } catch (error) {
     console.error('Error al agendar la cita:', error);
-    errorMessage.value = 'No se puede agendar una cita. Revisa los datos e intenta de nuevo.';
+    errorMessage.value = (error as Error).message;
   } finally {
     isLoading.value = false;
   }
@@ -191,11 +191,6 @@ function handleSendToWhatsapp() {
   const url = `https://wa.me/${numeroAtencion}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
 }
-
-
-
-
-
 </script>
 
 <template>
