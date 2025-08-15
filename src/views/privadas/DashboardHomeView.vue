@@ -387,12 +387,13 @@ const arePrepagadaFieldsRequired = computed(() => {
   return citaParaEditar.value.tipoAtencion.includes('PREPAGADA');
 });
 
+let fechaAConsultar: string = '';
 async function fetchCitas(filtro: string) {
   isLoading.value = true;
   errorMessage.value = null;
   activeFilter.value = filtro;
 
-  const fechaAConsultar = (filtro !== 'today' && filtro !== 'tomorrow') ? selectedDate.value : filtro;
+  fechaAConsultar = (filtro !== 'today' && filtro !== 'tomorrow') ? selectedDate.value : filtro;
 
   if (!fechaAConsultar) {
     isLoading.value = false;
@@ -470,7 +471,7 @@ async function handleConfirmUpdate() {
     await actualizarCita(citaParaEditar.value.id, updatePayload);
     alert("Cita actualizada con éxito.");
     closeEditModal();
-    //fetchCitas('today');
+    fetchCitas(fechaAConsultar);
   } catch (error) {
     alert((error as Error).message);
   } finally {

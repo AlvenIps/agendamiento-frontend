@@ -27,7 +27,7 @@ async function fetchLogs(page = 0) {
   // Construimos el objeto de parámetros de forma segura y explícita.
   const params: AuditLogParams = {
     page,
-    size: 15,
+    size: 10,
   };
 
   // Añadimos los filtros solo si tienen un valor.

@@ -1,5 +1,5 @@
 import apiClient from '@/services/apiClient.ts';
-import type { CitaRequest, CitaResponse, CitaUpdate } from '@/types';
+import type { CitaRequest, CitaResponse, CitaUpdate, CitaGrupalRequest } from '@/types';
 import { isAxiosError } from 'axios';
 import { extraerErrorApi } from '@/utils/errorUtils.ts';
 
@@ -38,6 +38,49 @@ export async function agendarNuevaCita(formData: CitaRequest): Promise<CitaRespo
     const specificMessage = extraerErrorApi(error, 'No se pudo agendar la cita.');
     throw new Error(specificMessage);
   }
+}
+
+export async function agendarCitaGrupal(dto: CitaGrupalRequest): Promise<CitaResponse[]> {
+  const dataParaEnviar = new FormData();
+  try {
+    const datosCitaGrupal = {
+      ...dto,
+      clientes: dto.clientes.map(cliente => {
+        const restoDelCliente = { ...cliente };
+        delete restoDelCliente.ordenMedicaFile;
+        return restoDelCliente;
+      })
+    };
+    dataParaEnviar.append('datosCitaGrupal', new Blob([JSON.stringify(datosCitaGrupal)], {
+      type: 'application/json',
+    }));
+    dto.clientes.forEach(cliente => {
+      if (cliente.ordenMedicaFile) {
+        dataParaEnviar.append(`ordenesMedicas[${cliente.numeroIdentificacion}]`, cliente.ordenMedicaFile);
+      }
+    });
+    const response = await apiClient.post<CitaResponse[]>('/citas/grupal', dataParaEnviar, {
+      headers: { 'Content-Type': 'multipart/form-data', },
+    });
+    return response.data;
+  } catch (error) {
+    const speecificMessage = extraerErrorApi(error, 'No se pudo agendar la cita grupal..');
+    throw new Error(speecificMessage);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 export async function getAvailableTimes(fecha: string, nombreSede: string): Promise<string[]> {

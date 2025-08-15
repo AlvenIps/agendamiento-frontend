@@ -112,6 +112,32 @@ export interface ClienteUpdate {
   direccion?: string;
 }
 
+export interface ClienteEnGrupo {
+  tipoIdentificacion: string;
+  numeroIdentificacion: string;
+  examenes: string;
+  tipoAtencion: TipoAtencion;
+  nombres: string;
+  apellidos: string;
+  sexo: Sexo;
+  fechaNacimiento: string;
+  email: string;
+  celular: string;
+  direccion: string;
+
+  ordenMedicaFile?: File | null;
+}
+
+export interface CitaGrupalRequest {
+  clientes: ClienteEnGrupo[];
+  nombreSede: string;
+  fechaHoraCita: string;
+  direccionCita: string;
+  barrio: string;
+  formaPago: FormaPago;
+  observaciones?: string;
+}
+
 
 
 

@@ -4,8 +4,7 @@ import type { CitaRequest, CitaResponse } from '@/types';
 import { agendarNuevaCita, verificarCliente, getAvailableTimes } from '@/services/citasService.ts';
 import { useInputFilter } from '@/composables/useInputFilter.ts';
 import html2canvas from 'html2canvas' // convierte html a imagen;
-import { extraerErrorApi } from '@/utils/errorUtils.ts';
-
+import { LISTA_SEDES } from '@/config/sedes.ts';
 // ESTADO DEL COMPONENTE
 const initialState: CitaRequest = {
   tipoIdentificacion: 'CC',
@@ -186,8 +185,8 @@ async function handleDownloadImage() {
   }
 }
 function handleSendToWhatsapp() {
-  const numeroAtencion = '573226642730';
-  const mensaje = 'Hola Alven IPS, les envío el recordatprio de cita para recibir la cotización. ¡Gracias!';
+  const numeroAtencion = '573015030080';
+  const mensaje = 'Hola Alven IPS, les envío el recordatorio de cita para recibir la cotización. ¡Gracias!';
   const url = `https://wa.me/${numeroAtencion}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
 }
@@ -373,7 +372,9 @@ function handleSendToWhatsapp() {
                       required>
                       <!-- Opción deshabilitada que actúa como placeholder -->
                       <option disabled value="">Por favor, elige una sede...</option>
-                      <option value="MONTERÍA">Montería</option>
+                      <option v-for="sede in LISTA_SEDES" :key="sede.id" :value="sede.id">
+                        {{ sede.nombre }}
+                      </option>
                     </select>
                   </div>
                   <!-- Selector de Fecha -->
@@ -428,6 +429,18 @@ function handleSendToWhatsapp() {
                     <label for="examenes" class="form-label">Exámenes a Realizar</label>
                     <textarea class="form-control" id="examenes" rows="3" v-model="formData.examenes" required></textarea>
                   </div>
+                  <div class="col-12">
+                    <label for="ordenMedica" class="form-label">
+                      <span v-if="isOrdenMedicaRequired" class="text-danger fw-bold">*</span>
+                      <span v-else>Adjunte Orden Médica</span>
+                    </label>
+                    <p class="red-alven" style="font-size: 18px">Tamaño máximo de subida: 10 MB</p>
+                    <!-- (14) Usamos el evento '@change' para manejar la subida de archivos -->
+                    <input class="form-control" type="file" id="ordenMedica" @change="handleFileUpload"
+                           accept="image/png, image/jpeg, image/webp, image/jpg"
+                           :required="isOrdenMedicaRequired"
+                    >
+                  </div>
                   <!-- Tipo de Atención -->
                   <div class="col-md-6">
                     <label for="tipoAtencion" class="form-label">Tipo de Atención</label>
@@ -458,18 +471,7 @@ function handleSendToWhatsapp() {
                     <label for="observaciones" class="form-label">Observaciones (Opcional)</label>
                     <textarea class="form-control" id="observaciones" rows="3" v-model="formData.observaciones"></textarea>
                   </div>
-                  <div class="col-12">
-                    <label for="ordenMedica" class="form-label">
-                      <span v-if="isOrdenMedicaRequired" class="text-danger fw-bold">*</span>
-                      <span v-else>(Opcional)</span>
-                    </label>
-                    <p class="red-alven" style="font-size: 18px">Tamaño máximo de subida: 10 MB</p>
-                    <!-- (14) Usamos el evento '@change' para manejar la subida de archivos -->
-                    <input class="form-control" type="file" id="ordenMedica" @change="handleFileUpload"
-                           accept="image/png, image/jpeg, image/webp, image/jpg"
-                            :required="isOrdenMedicaRequired"
-                    >
-                  </div>
+
                 </div>
 
                 <hr class="my-4">

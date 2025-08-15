@@ -6,7 +6,7 @@ import apiClient from '@/services/apiClient.ts';
 const authorityUrl = import.meta.env.VITE_API_BASE_URL;
 const redirectUri = import.meta.env.VITE_OIDC_REDIRECT_URI;
 
-const postLogoutRedirectUri = redirectUri ? redirectUri.replace('/auth/callback', 'login') : 'http://localhost:5173/login';
+const postLogoutRedirectUri = redirectUri ? redirectUri.replace('/auth/callback', 'login') : 'http://localhost:5173/login'; // URL FRONTEND
 
 const settings = {
   authority: authorityUrl,

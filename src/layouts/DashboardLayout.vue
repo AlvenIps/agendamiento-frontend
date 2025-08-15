@@ -35,7 +35,7 @@ function handleLogout() {
           </RouterLink>
         </li>
         <li class="nav-item">
-          <RouterLink :to="{ name: 'clientes' }" class="nav-link text-white">
+          <RouterLink :to="{ name: 'clientes' }" class="nav-link text-white" v-if="authStore.isAuditor || authStore.isAdmin && !authStore.isUser">
             <i class="bi bi-people-fill"></i>
             <span class="link-text">Clientes</span>
           </RouterLink>
