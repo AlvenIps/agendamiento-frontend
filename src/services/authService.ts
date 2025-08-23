@@ -6,7 +6,7 @@ import apiClient from '@/services/apiClient.ts';
 const authorityUrl = import.meta.env.VITE_API_BASE_URL;
 const redirectUri = import.meta.env.VITE_OIDC_REDIRECT_URI;
 
-const postLogoutRedirectUri = redirectUri ? redirectUri.replace('/auth/callback', 'login') : 'http://localhost:5173/login'; // URL FRONTEND
+const postLogoutRedirectUri = redirectUri ? new URL(redirectUri).origin + '/login' : 'https://alvenips.com/login';
 
 const settings = {
   authority: authorityUrl,
@@ -45,7 +45,7 @@ export async function handleLoginCallback(): Promise<string> {
 
     // Devolvemos la ruta a la que el usuario debe ser redirigido.
     const state = user.state as { redirectPath?: string };
-    return state?.redirectPath || '/dashboard';
+    return state?.redirectPath || '/panel';
 
   } catch (error) {
     console.error("Error en el callback de login:", error);

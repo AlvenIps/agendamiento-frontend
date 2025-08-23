@@ -17,10 +17,6 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      redirect: { name: 'agendar' },
-    },
-    {
       path: '/agendar',
       name: 'agendar',
       component: AgendarCitaView,
@@ -37,7 +33,7 @@ const router = createRouter({
     },
     // rutas privadas
     {
-      path: '/dashboard',
+      path: '/panel',
       name: 'dashboard',
       component: DashboardLayout,
       meta: { requiresAuth: true }, // con esto se marca como privada
@@ -48,22 +44,22 @@ const router = createRouter({
           component: DashboardHomeView,
         },
         {
-          path: '/clientes',
+          path: 'clientes',
           name: 'clientes',
           component: PanelClientesView
         },
         {
-          path: '/estadisticas',
+          path: 'estadisticas',
           name: 'estadisticas',
           component: EstadisticasView
         },
         {
-          path: '/reportes',
+          path: 'reportes',
           name: 'reportes',
           component: ReportesView
         },
         {
-          path: '/logs',
+          path: 'logs',
           name: 'logs',
           component: AuditView
         }

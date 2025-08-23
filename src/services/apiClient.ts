@@ -4,7 +4,8 @@ import { refreshToken } from '@/services/authService.ts';
 
 
 const apiClient: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  // el Reverse Proxy redirige esto al contenedor Docker del backend
+  baseURL: import.meta.env.VITE_API_CLIENT_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   }

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { getAuditLogs } from '@/services/auditService';
+// (1) --- Importamos la nueva función de exportación ---
+import { getAuditLogs, exportAuditLogs } from '@/services/auditService';
 import type { AuditLogPage, AuditLogParams } from '@/types/indexAudit';
 import { extraerErrorApi } from '@/utils/errorUtils';
 
 // --- ESTADO DEL COMPONENTE ---
 const isLoading = ref(true);
+const isExporting = ref(false); // Estado para el spinner del botón de exportar
 const errorMessage = ref<string | null>(null);
 
 // Estado para los filtros
@@ -18,22 +20,14 @@ const currentPage = ref(0);
 
 // --- LÓGICA / MÉTODOS ---
 
-async function fetchLogs(page = 0) {
-  isLoading.value = true;
-  errorMessage.value = null;
-  currentPage.value = page;
-
-  // (1) --- ¡CORRECCIÓN DE TIPOS! ---
-  // Construimos el objeto de parámetros de forma segura y explícita.
-  const params: AuditLogParams = {
-    page,
-    size: 10,
-  };
-
-  // Añadimos los filtros solo si tienen un valor.
-  // Esto asegura que nunca pasemos 'undefined' donde se espera un 'string'.
+// Construye el objeto de parámetros a partir de los filtros actuales
+function buildParams(page?: number): AuditLogParams {
+  const params: AuditLogParams = {};
+  if (page !== undefined) {
+    params.page = page;
+    params.size = 10;
+  }
   if (fechaInicio.value) {
-    // Convertimos la fecha al formato ISO completo que espera el backend
     params.fechaInicio = new Date(fechaInicio.value + 'T00:00:00-05:00').toISOString();
   }
   if (fechaFin.value) {
@@ -42,6 +36,15 @@ async function fetchLogs(page = 0) {
   if (usuarioEmail.value) {
     params.usuarioEmail = usuarioEmail.value;
   }
+  return params;
+}
+
+async function fetchLogs(page = 0) {
+  isLoading.value = true;
+  errorMessage.value = null;
+  currentPage.value = page;
+
+  const params = buildParams(page);
 
   try {
     const data = await getAuditLogs(params);
@@ -52,6 +55,43 @@ async function fetchLogs(page = 0) {
     isLoading.value = false;
   }
 }
+
+// --- MÉTODO DE EXPORTACIÓN ACTUALIZADO CON VALIDACIÓN ---
+async function handleExport() {
+  errorMessage.value = null; // Limpiamos errores previos
+
+  // (2) --- ¡NUEVA VALIDACIÓN! ---
+  // Verificamos si al menos un filtro tiene valor.
+  if (!fechaInicio.value && !fechaFin.value && !usuarioEmail.value) {
+    errorMessage.value = "Por favor, aplica al menos un filtro (fecha o usuario) para poder exportar los datos.";
+    return; // Detenemos la ejecución si no hay filtros
+  }
+
+  isExporting.value = true;
+
+  // Reutilizamos la misma lógica para construir los parámetros de filtro
+  const params = buildParams();
+
+  try {
+    const blob = await exportAuditLogs(params);
+    // Creamos una URL temporal para el archivo recibido
+    const url = window.URL.createObjectURL(new Blob([blob]));
+    const link = document.createElement('a');
+    link.href = url;
+    // Asignamos el nombre de archivo que el navegador usará
+    link.setAttribute('download', 'Reporte_Logs_Auditoria.xlsx');
+    // Añadimos, disparamos el clic y removemos el enlace
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    errorMessage.value = extraerErrorApi(error, 'No se pudo exportar el reporte.');
+  } finally {
+    isExporting.value = false;
+  }
+}
+
 
 function clearFilters() {
   fechaInicio.value = '';
@@ -99,6 +139,15 @@ function formatFullDateTime(dateString: string): string {
         <div class="d-flex justify-content-end gap-2 mt-3">
           <button class="btn btn-outline-secondary" @click="clearFilters">Limpiar Filtros</button>
           <button class="btn btn-primary" @click="fetchLogs(0)">Aplicar Filtros</button>
+          <!-- El botón de exportación no necesita cambios en el template -->
+          <button
+            class="btn btn-success d-inline-flex align-items-center gap-2"
+            @click="handleExport"
+            :disabled="isExporting || !logsPage || logsPage.totalElements === 0">
+            <span v-if="isExporting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <i v-else class="bi bi-file-earmark-excel-fill"></i>
+            Exportar a Excel
+          </button>
         </div>
       </div>
     </div>
@@ -128,7 +177,6 @@ function formatFullDateTime(dateString: string): string {
           </thead>
           <tbody>
           <tr v-for="log in logsPage.content" :key="log.id">
-            <!-- (2) --- ¡CORRECCIÓN! Usamos la función de formateo --- -->
             <td>{{ formatFullDateTime(log.timestamp) }}</td>
             <td>{{ log.usuarioEmail }}</td>
             <td><span class="badge bg-secondary">{{ log.accion }}</span></td>

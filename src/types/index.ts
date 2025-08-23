@@ -126,6 +126,7 @@ export interface ClienteEnGrupo {
   direccion: string;
 
   ordenMedicaFile?: File | null;
+  _clienteNuevo?: boolean;
 }
 
 export interface CitaGrupalRequest {

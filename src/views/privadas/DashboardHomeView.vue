@@ -294,6 +294,7 @@ import { useInputFilter } from '@/composables/useInputFilter.ts';
 import { useAuthStore } from '@/stores/auth.ts';
 import { LISTA_SEDES } from '@/config/sedes.ts';
 import { formatCurrency } from '@/utils/formatter';
+import Swal from 'sweetalert2'
 
 const authStore = useAuthStore();
 
@@ -452,7 +453,11 @@ async function handleConfirmUpdate() {
     const autorizacionValido = editFormData.numeroAutorizacion && editFormData.numeroAutorizacion.trim() !== '';
 
     if (!copagoValido || !autorizacionValido) {
-      alert("Para citas de tipo PREPAGADA, el 'Valor Copago' y el 'Número de Autorización' son obligatorios." );
+      Swal.fire({
+        title: "¡Recuerda!",
+        text: "Para citas de tipo PREPAGADA, el 'Valor Copago' y el 'Número de Autorización' son obligatorios.",
+        icon: "warning",
+      })
       return;
     }
   }
@@ -462,14 +467,17 @@ async function handleConfirmUpdate() {
     updatePayload.nuevaFechaHoraCita = fechaLocal.toISOString();
   }
   if(Object.keys(updatePayload).length === 0){
-    alert("No se ha realizado ningun cambio.");
+    Swal.fire("No se ha realizado ningun cambio.");
     return;
   }
 
   isEditLoading.value = true;
   try {
     await actualizarCita(citaParaEditar.value.id, updatePayload);
-    alert("Cita actualizada con éxito.");
+    Swal.fire({
+      text: "Cita actualizada con éxito.",
+      icon: "success",
+    })
     closeEditModal();
     fetchCitas(fechaAConsultar);
   } catch (error) {
@@ -490,53 +498,110 @@ function closeDetailsModal() {
 
 async function handleVerOrden(cita: CitaResponse) {
   if (!cita.fotoPublicId) {
-    alert("Esta cita no tiene una orden médica adjunta.");
+    Swal.fire({
+      text: "Esta cita no tiene una orden médica adjunta.",
+      icon: "warning",
+    });
     return;
   }
   try {
-    alert('Obteniendo enlace seguro...');
     const urlSegura = await getUrlOrdenMedica(cita.id);
     window.open(urlSegura, '_blank');
   } catch (error) {
     alert((error as Error).message);
+    Swal.fire((error as Error).message);
   }
 }
 
 async function handleCancelarCita(citaId: number) {
-  if (confirm("¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.")) {
+  const resultado = await Swal.fire({
+    title: '¿Estás seguro?',
+    text: "No podrás revertir esta acción.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Aceptar',
+    cancelButtonText: 'Mantener',
+  });
+  if (resultado.isConfirmed) {
     try {
       await cancelarCita(citaId);
-      alert("Cita cancelada con éxito.");
-      fetchCitas('today'); // Refrescamos la tabla
-    } catch (error) {
-      alert((error as Error).message);
+      Swal.fire(
+        '¡Cancelada!',
+        'La cita ha sido cancelada con éxito.',
+        'success'
+      );
+      fetchCitas(fechaAConsultar);
+    }catch (error) {
+      Swal.fire(
+        'Error',
+        (error as Error).message,
+        'error'
+      );
     }
   }
 }
 
 async function marcarComoCompletada(citaId: number) {
-  if (!confirm("¿Marcar esta cita como COMPLETADA?")) return;
+  const resultado = await Swal.fire({
+    title: '¿Estás seguro?',
+    text: "No podrás revertir esta acción.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Aceptar',
+    cancelButtonText: 'Mantener',
+  });
+  if (!resultado.isConfirmed) return;
   const updateDTO: CitaUpdate = {
     estado: 'COMPLETADA'
   };
   try {
     await actualizarCita(citaId, updateDTO);
-    alert("Cita COMPLETADA con exito");
-    //fetchCitas('today');
+    Swal.fire(
+      '¡Completada!',
+      'La cita ha sido completada con éxito.',
+      'success'
+    );
+    fetchCitas(fechaAConsultar);
   } catch (error) {
-    alert((error as Error).message);
+    Swal.fire(
+      'Error',
+      (error as Error).message,
+      'error'
+    );
   }
 }
 async function marcarComoNoAsistio(citaId: number) {
-  if (!confirm("¿Estás seguro de que deseas marcar esta cita como NO ASISTIÓ?")) return;
+  const resultado = await Swal.fire({
+    title: '¿Estás seguro?',
+    text: "No podrás revertir esta acción.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Aceptar',
+    cancelButtonText: 'Mantener',
+  });
+  if (!resultado.isConfirmed) return;
 
   const updateDTO: CitaUpdate = { estado: 'NO_ASISTIO' };
   try {
     await actualizarCita(citaId, updateDTO);
-    alert("Cita marcada como no asistió.");
-    //fetchCitas('today');
+    Swal.fire(
+      '¡No asistida!',
+      'La cita ha sido marcada como no asistida.',
+      'success'
+    );
+    fetchCitas(fechaAConsultar);
   } catch (error) {
-    alert((error as Error).message);
+    Swal.fire(
+      'Error',
+      (error as Error).message,
+      'error'
+    );
   }
 }
 // formatear un input.

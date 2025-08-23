@@ -13,3 +13,15 @@ export async function getAuditLogs(params: AuditLogParams): Promise<AuditLogPage
     throw new Error(specificMessage);
   }
 }
+
+export async function exportAuditLogs(params: AuditLogParams): Promise<Blob> {
+  try {
+    const response = await apiClient.get<Blob>('/audit/exportar', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(extraerErrorApi(error, 'No se pudo generar el reporte.'));
+  }
+}

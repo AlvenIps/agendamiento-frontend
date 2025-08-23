@@ -56,31 +56,20 @@ export async function agendarCitaGrupal(dto: CitaGrupalRequest): Promise<CitaRes
     }));
     dto.clientes.forEach(cliente => {
       if (cliente.ordenMedicaFile) {
-        dataParaEnviar.append(`ordenesMedicas[${cliente.numeroIdentificacion}]`, cliente.ordenMedicaFile);
+        dataParaEnviar.append(cliente.numeroIdentificacion, cliente.ordenMedicaFile);
       }
     });
     const response = await apiClient.post<CitaResponse[]>('/citas/grupal', dataParaEnviar, {
       headers: { 'Content-Type': 'multipart/form-data', },
+      params: {
+        ordenesMedicas: ''
+      }
     });
     return response.data;
   } catch (error) {
     const speecificMessage = extraerErrorApi(error, 'No se pudo agendar la cita grupal..');
     throw new Error(speecificMessage);
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 export async function getAvailableTimes(fecha: string, nombreSede: string): Promise<string[]> {
