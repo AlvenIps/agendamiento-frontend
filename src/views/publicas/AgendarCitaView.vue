@@ -512,6 +512,22 @@ p { font-size: 25px; }
 .green-alven { color: #238636; }
 .blue-alven { color: #003566; }
 .red-alven { color: #C03437; }
-.bton-green-alven { background-color: #238636 !important; color: #f0f2f5; }
-.bton-vacio-alven { background-color: transparent; color: #238636; border-color: #238636; border-radius: 50%; border: 2px; }
+.bton-green-alven {
+  background-color: #238636 !important;
+  color: #f0f2f5;
+  border-radius: 8px;
+  padding: 0.375rem 0.75rem;
+  min-width: 90px;
+  text-align: center;
+  border: 1px solid #238636;
+}
+.bton-vacio-alven {
+  background-color: transparent;
+  color: #238636;
+  border: 1px solid #238636;
+  border-radius: 8px;
+  padding: 0.375rem 0.75rem;
+  min-width: 90px;
+  text-align: center;
+}
 </style>
