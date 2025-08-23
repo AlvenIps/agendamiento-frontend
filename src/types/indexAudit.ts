@@ -12,10 +12,10 @@ export interface AuditLog {
 }
 
 export interface AuditLogParams {
-  page: number;
-  size: number;
-  fechaInicio: string;
-  fechaFin: string;
-  usuarioEmail: string;
+  page?: number;
+  size?: number;
+  fechaInicio?: string;
+  fechaFin?: string;
+  usuarioEmail?: string;
 }
 export type AuditLogPage = Page<AuditLog>;
