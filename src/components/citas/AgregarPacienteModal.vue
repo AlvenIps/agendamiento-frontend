@@ -27,7 +27,6 @@
               <small>Cliente no encontrado. Por favor, completa los datos requeridos.</small>
             </div>
 
-            <!-- --- INICIO DE LA CORRECCIÓN --- -->
             <!-- Campos que solo aparecen si el cliente es nuevo -->
             <div v-if="esNuevoCliente" class="row g-3 mb-3">
               <div class="col-md-6"><input type="text" class="form-control" v-model="paciente.nombres" placeholder="Nombres *" required></div>
@@ -38,8 +37,26 @@
                 <input type="date" class="form-control" v-model="paciente.fechaNacimiento" required>
                 <small class="form-text text-muted">Fecha de Nacimiento *</small>
               </div>
+              <!-- --- INICIO DE LA CORRECCIÓN --- -->
+              <div class="col-md-6">
+                <label class="form-label d-block">Sexo *</label>
+                <div class="d-flex gap-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sexoModal" id="sexoMasculinoModal" value="MASCULINO" v-model="paciente.sexo">
+                    <label class="form-check-label" for="sexoMasculinoModal">M</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sexoModal" id="sexoFemeninoModal" value="FEMENINO" v-model="paciente.sexo">
+                    <label class="form-check-label" for="sexoFemeninoModal">F</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sexoModal" id="sexoOtroModal" value="OTRO" v-model="paciente.sexo">
+                    <label class="form-check-label" for="sexoOtroModal">Otro</label>
+                  </div>
+                </div>
+              </div>
+              <!-- --- FIN DE LA CORRECCIÓN --- -->
             </div>
-            <!-- --- FIN DE LA CORRECCIÓN --- -->
 
             <!-- Campos que siempre se deben llenar para la cita -->
             <div class="mt-3">
@@ -97,6 +114,7 @@ const initialState: Partial<ClienteEnGrupo> = {
   email: '',
   celular: '',
   fechaNacimiento: '',
+  sexo: 'OTRO', // Se añade el valor por defecto
   examenes: '',
   tipoAtencion: 'PARTICULAR',
   ordenMedicaFile: null,
@@ -113,7 +131,7 @@ const puedeGuardar = computed(() => {
     return false;
   }
   if (esNuevoCliente.value) {
-    if (!paciente.nombres || !paciente.apellidos || !paciente.email || !paciente.celular || !paciente.fechaNacimiento) {
+    if (!paciente.nombres || !paciente.apellidos || !paciente.email || !paciente.celular || !paciente.fechaNacimiento || !paciente.sexo) {
       return false;
     }
   }
