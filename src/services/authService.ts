@@ -6,7 +6,7 @@ import apiClient from '@/services/apiClient.ts';
 const authorityUrl = import.meta.env.VITE_API_BASE_URL;
 const redirectUri = import.meta.env.VITE_OIDC_REDIRECT_URI;
 
-const postLogoutRedirectUri = redirectUri ? new URL(redirectUri).origin + '/login' : 'https://alvenips.com/login';
+const postLogoutRedirectUri = redirectUri ? new URL(redirectUri).origin + '/login' : 'https://app.alvenips.com/login';
 
 const settings = {
   authority: authorityUrl,
