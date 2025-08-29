@@ -6,7 +6,7 @@ import apiClient from '@/services/apiClient.ts';
 const authorityUrl = import.meta.env.VITE_API_BASE_URL;
 const redirectUri = import.meta.env.VITE_OIDC_REDIRECT_URI;
 
-const postLogoutRedirectUri = redirectUri ? new URL(redirectUri).origin + '/signin' : 'https://app.alvenips.com/signin';
+const postLogoutRedirectUri = redirectUri ? new URL(redirectUri).origin + '/login' : 'https://app.alvenips.com/login';
 
 const settings = {
   authority: authorityUrl,
@@ -49,7 +49,7 @@ export async function handleLoginCallback(): Promise<string> {
 
   } catch (error) {
     console.error("Error en el callback de login:", error);
-    return '/signin?error=true';
+    return '/login?error=true';
   }
 }
 
