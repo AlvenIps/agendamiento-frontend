@@ -22,7 +22,7 @@ const router = createRouter({
       component: AgendarCitaView,
     },
     {
-      path: '/login',
+      path: '/signin',
       name: 'login',
       component: LoginView,
     },
