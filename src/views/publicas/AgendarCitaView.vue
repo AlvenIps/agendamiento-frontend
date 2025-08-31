@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import axios from 'axios';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { CitaRequest, CitaResponse, ClienteEnGrupo, CitaGrupalRequest, FormaPago, Sexo, TipoAtencion } from '@/types';
 import { agendarNuevaCita, verificarCliente, getAvailableTimes, agendarCitaGrupal } from '@/services/citasService.ts';
 import { useInputFilter } from '@/composables/useInputFilter.ts';
@@ -289,16 +288,15 @@ const soloLetras = (event: Event) => {
     <div class="row justify-content-center">
       <div class="col-lg-8">
         <div class="card shadow-lg border-0" style="background-color: #f8f9fa">
-          <div class="card-body p-4 p-md-5">
+          <div class="card-body p-3 p-md-4">
             <div class="d-flex justify-content-center">
               <div style="max-width: 500px;">
-                <img class="img-fluid" alt="Logo de Alven IPS" src="https://res.cloudinary.com/dusy4drbp/image/upload/v1751953986/alven_qmy1gr.png" />
+                <img class="img-fluid" alt="Alven Care" src="https://res.cloudinary.com/dusy4drbp/image/upload/v1756670377/alven-care-removebg-preview_oihctq.png" />
               </div>
             </div>
-            <h1 class="card-title text-center fw-bold mb-3 blue-alven">Agendamiento de Tomas de Muestras a Domicilio</h1>
-            <p class="text-center text-muted mb-4">
-              Bienvenido a <span class="red-alven">nuestro nuevo sistema de agendamiento.</span>
-            </p>
+            <h1 class="text-center blue-alven mb-4">
+              Bienvenido a <span class="red-alven">Alven Care</span>, nuestro nuevo sistema de agendamiento.
+            </h1>
             <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
 
             <!-- PASO 1 -->
@@ -470,10 +468,17 @@ const soloLetras = (event: Event) => {
               </div>
             </div>
           </div>
+          <div class=" row justify-content-center">
+            <img src="https://res.cloudinary.com/dusy4drbp/image/upload/v1756668913/alven-acredit-removebg-preview_l8zhqe.png" alt="Certificación"
+                 class="img-fluid"
+                 style="bottom: 1rem; right: 1rem; width: 150px; height: auto;">
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+
   <AgregarPacienteModal
     :is-visible="mostrarModal"
     @close="mostrarModal = false"
