@@ -9,13 +9,22 @@ import { LISTA_SEDES } from '@/config/sedes.ts';
 import AgregarPacienteModal from '@/components/citas/AgregarPacienteModal.vue';
 import Swal from 'sweetalert2';
 
+// --- CONTANTES PARA SELECTS DINÁMICOS ---
+const TIPOS_DE_ATENCION: TipoAtencion[] = [
+  'PARTICULAR', 'SURA_PREPAGADA', 'COOMEVA_PREPAGADA', 'SEGUROS_BOLIVAR_PREPAGADA','COLMEDICA_PREPAGADA',
+  'FOMAG', 'SOLO_TOMA_DE_MUESTRA', 'INYECTOLOGIA', 'SUERO_VITAMINADO'
+];
+const FORMA_PAGO: FormaPago[] = [
+  'EFECTIVO', 'TRANSFERENCIA', 'DATAFONO', 'NO_DEFINIDO'
+];
+
 // --- ESTADO ---
 const initialDatosCompartidos = {
   nombreSede: '',
   fechaHoraCita: '',
   direccionCita: '',
   barrio: '',
-  formaPago: 'NO_DEFINIDO' as FormaPago,
+  formaPago: '' as FormaPago,
   observaciones: '',
 };
 const datosCompartidos = reactive({ ...initialDatosCompartidos });
@@ -80,7 +89,19 @@ watch([selectedDate, () => datosCompartidos.nombreSede], async ([newDate, newSed
   selectedTime.value = '';
   errorMessage.value = null;
   try {
-    const times = await getAvailableTimes(newDate, newSede);
+    let times = await getAvailableTimes(newDate, newSede);
+    const hoy = new Date();
+    const fechaSeleccionada = new Date(newDate + 'T00:00:00-05:00');
+    if (fechaSeleccionada.toDateString() === hoy.toDateString()) {
+      const horaActual = hoy.getHours();
+      const minutoActual = hoy.getMinutes();
+      times = times.filter(time => {
+        const [hora, minuto] = time.split(':').map(Number);
+        if (hora > horaActual) return true;
+        if (hora === horaActual && minuto > minutoActual) return true;
+        return false;
+      });
+    }
     availableTimes.value = times;
   } catch (error) {
     console.error("Ha ocurrido un error al cargar la disponibilidad", error)
@@ -184,8 +205,17 @@ async function handleSubmit() {
 
   } catch (error) {
     console.error('Error detallado al agendar la cita:', error);
-    if (axios.isAxiosError(error)) {
-      console.error('Respuesta del servidor:', error.response?.data);
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const errorData = error.response.data;
+      if (errorData.fechaHoraCita) {
+        errorMessage.value = errorData.fechaHoraCita;
+      } else if (errorData.mensaje) {
+        errorMessage.value = errorData.mensaje;
+      } else {
+        errorMessage.value = 'Ocurrió un error de validación. Revise los datos.';
+      }
+    } else {
+      errorMessage.value = (error as Error).message;
     }
     errorMessage.value = (error as Error).message;
   } finally {
@@ -347,7 +377,9 @@ const soloLetras = (event: Event) => {
                       <div class="col-md-6">
                         <label class="form-label">Tipo de Atención</label>
                         <select class="form-select" v-model="paciente.tipoAtencion" required>
-                          <option value="PARTICULAR">Particular</option><option value="SURA_PREPAGADA">Sura Prepagada</option><option value="COOMEVA_PREPAGADA">Coomeva Prepagada</option><option value="SEGUROS_BOLIVAR_PREPAGADA">Seguros Bolívar Prepagada</option><option value="FOMAG">Fomag</option><option value="SOLO_TOMA_DE_MUESTRA">Solo toma de muestra</option><option value="INYECTOLOGIA">Inyectología</option><option value="SUERO_VITAMINADO">Suero Vitaminado</option>
+                          <option v-for="tipo in TIPOS_DE_ATENCION" :key="tipo" :value="tipo">
+                            {{ tipo.replace(/_/g, ' ') }}
+                          </option>
                         </select>
                       </div>
                       <!-- (6) --- TEMPLATE ACTUALIZADO PARA USAR EL MAP DE ARCHIVOS --- -->
@@ -414,6 +446,15 @@ const soloLetras = (event: Event) => {
                   <div class="col-md-8">
                     <label class="form-label">Dirección de recogida <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" v-model="datosCompartidos.direccionCita" required>
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label">Forma de Pago <span class="text-danger">*</span></label>
+                    <select class="form-select" v-model="datosCompartidos.formaPago" required>
+                      <option disabled value="">Seleccione una forma de pago...</option>
+                      <option v-for="forma in FORMA_PAGO" :key="forma" :value="forma">
+                        {{ forma.replace(/_/g, ' ') }}
+                      </option>
+                    </select>
                   </div>
                 </div>
                 <hr class="my-4">

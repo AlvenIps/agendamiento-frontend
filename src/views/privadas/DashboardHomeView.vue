@@ -161,7 +161,7 @@
                         id="reagendarFecha"
                         class="form-control"
                         v-model="reagendarFechaSeleccionada"
-                        :disabled="!['AGENDADA', 'NO_ASISTIO'].includes(citaParaEditar?.estado || '')"
+                        :disabled="!['AGENDADA', 'NO_ASISTIO', 'COMPLETADA'].includes(citaParaEditar?.estado || '')"
                       />
                     </div>
                     <div class="col-md-6" v-if="reagendarFechaSeleccionada">
@@ -478,10 +478,13 @@ async function handleConfirmUpdate() {
       text: "Cita actualizada con éxito.",
       icon: "success",
     })
-    closeEditModal();
     fetchCitas(fechaAConsultar);
+    closeEditModal();
   } catch (error) {
-    alert((error as Error).message);
+    Swal.fire({
+      text: (error as Error).message,
+      icon: "error",
+    })
   } finally {
     isEditLoading.value = false;
   }

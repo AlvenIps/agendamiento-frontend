@@ -9,7 +9,8 @@ export type TipoAtencion =
   | 'FOMAG'
   | 'SOLO_TOMA_DE_MUESTRA'
   | 'INYECTOLOGIA'
-  | 'SUERO_VITAMINADO';
+  | 'SUERO_VITAMINADO'
+  | 'COLMEDICA_PREPAGADA';
 
 export type FormaPago =
   | 'EFECTIVO'
