@@ -177,6 +177,7 @@ function cerrar() {
   emit('close');
 }
 
+
 watch(() => props.isVisible, (visible) => {
   if (visible) {
     resetState();

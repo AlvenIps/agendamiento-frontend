@@ -302,6 +302,18 @@ function handleSendToWhatsapp() {
   const url = `https://wa.me/${numeroAtencion}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
 }
+// --- NUEVA FUNCIÓN DE FORMATO DE HORA ---
+function formatTime(timeString: string): string {
+  const [hour, minute] = timeString.split(':');
+  const date = new Date();
+  date.setHours(parseInt(hour, 10));
+  date.setMinutes(parseInt(minute, 10));
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+}
 
 const soloNumeros = (event: Event) => {
   const input = event.target as HTMLInputElement;
@@ -435,7 +447,7 @@ const soloLetras = (event: Event) => {
                     <hr class="my-3"><label class="form-label">Horarios Disponibles para el {{ selectedDate }}:</label>
                     <div v-if="isCheckingAvailability" class="text-center"><div class="spinner-border spinner-border-sm text-success"></div><span class="ms-2">Buscando...</span></div>
                     <div v-else-if="availableTimes.length > 0" class="d-flex flex-wrap gap-2">
-                      <button v-for="time in availableTimes" :key="time" type="button" class="btn" :class="selectedTime === time ? 'bton-green-alven' : 'bton-vacio-alven'" @click="selectedTime = time">{{ time+' AM' }}</button>
+                      <button v-for="time in availableTimes" :key="time" type="button" class="btn" :class="selectedTime === time ? 'bton-green-alven' : 'bton-vacio-alven'" @click="selectedTime = time">{{ formatTime(time) }}</button>
                     </div>
                     <div v-else class="alert alert-warning p-2">No hay horarios disponibles.</div>
                   </div>

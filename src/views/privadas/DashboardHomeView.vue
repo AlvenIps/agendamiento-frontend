@@ -164,7 +164,7 @@
                         :disabled="!['AGENDADA', 'NO_ASISTIO', 'COMPLETADA'].includes(citaParaEditar?.estado || '')"
                       />
                     </div>
-                    <div class="col-md-6" v-if="reagendarFechaSeleccionada">
+                    <div class="col-12" v-if="reagendarFechaSeleccionada">
                       <label class="form-label">2. Elige un horario disponible:</label>
                       <div v-if="isReagendarLoading" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div></div>
                       <div v-else-if="reagendarHorariosDisponibles.length > 0" class="d-flex flex-wrap gap-2">
@@ -175,7 +175,7 @@
                           class="btn btn-sm"
                           :class="reagendarHoraSeleccionada === time ? 'btn-success' : 'btn-outline-success'"
                           @click="reagendarHoraSeleccionada = time">
-                          {{ time }}
+                          {{ formatTime(time) }}
                         </button>
                       </div>
                       <div v-else class="text-muted small">No hay horarios disponibles para este día.</div>
@@ -640,6 +640,18 @@ function handleDateChange() {
   if (selectedDate.value) {
     fetchCitas(selectedDate.value);
   }
+}
+// --- NUEVA FUNCIÓN DE FORMATO DE HORA ---
+function formatTime(timeString: string): string {
+  const [hour, minute] = timeString.split(':');
+  const date = new Date();
+  date.setHours(parseInt(hour, 10));
+  date.setMinutes(parseInt(minute, 10));
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
 }
 
 
