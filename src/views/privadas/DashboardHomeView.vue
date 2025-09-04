@@ -111,7 +111,7 @@
                     <td class="text-center g-2">
                       <button @click="openDetailsModal(cita)" class="btn btn-sm btn-outline-primary" title="Detalles"><i class="bi bi-info-circle-fill"></i></button>
                       <button v-if="cita.fotoPublicId" @click="handleVerOrden(cita)" class="btn btn-sm btn-outline-info" title="Ver"><i class="bi bi-eye-fill"></i></button>
-                      <template v-if="cita.nombreSede === authStore.user?.sede">
+                      <template v-if="authStore.isAuditor || cita.nombreSede === authStore.user?.sede">
                         <button @click="openEditModal(cita)" class="btn btn-sm btn-outline-warning" title="Reagendar"><i class="bi bi-pencil-fill"></i></button>
                         <button v-if="cita.estado === 'AGENDADA'" @click="handleCancelarCita(cita.id)" class="btn btn-sm btn-outline-danger" title="Cancelar"><i class="bi bi-trash-fill"></i></button>
                         <button v-if="cita.estado === 'AGENDADA'" @click="marcarComoCompletada(cita.id)" class="btn btn-sm btn-outline-success" title="Marcar como Cmpletada">
