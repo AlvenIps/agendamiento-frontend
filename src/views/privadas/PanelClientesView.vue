@@ -88,6 +88,7 @@
                 <th>Sede</th>
                 <th>Nombre Completo</th>
                 <th>Identificación</th>
+                <th>F. Nacimiento</th>
                 <th>Email</th>
                 <th>Celular</th>
                 <th>Dirección</th>
@@ -100,6 +101,7 @@
                 <td>{{ cliente.nombres }} {{ cliente.apellidos }}</td>
                 <td>{{ cliente.tipoIdentificacion }} {{ cliente.numeroIdentificacion }}</td>
                 <td>{{ cliente.email }}</td>
+                <td>{{ cliente.fechaNacimiento }}</td>
                 <td>{{ cliente.celular }}</td>
                 <td>{{ cliente.direccion }}</td>
                 <td class="text-center">
