@@ -49,6 +49,7 @@ export interface CitaResponse {
   tipoIdentificacion: string;
   numeroIdentificacionCliente: string;
   nombreCompletoCliente: string;
+  celularCliente: string;
   nombreSede: string;
 
   fechaHoraCita: string;

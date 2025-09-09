@@ -261,6 +261,7 @@
               <ul class="list-group list-group-flush mb-3">
                 <li class="list-group-item"><strong>Nombre:</strong> {{ citaParaDetalles.nombreCompletoCliente }}</li>
                 <li class="list-group-item"><strong>Identificación:</strong> {{ citaParaDetalles.tipoIdentificacion }} {{ citaParaDetalles.numeroIdentificacionCliente }}</li>
+                <li class="list-group-item"><strong>Celular:</strong> <span class="text-primary">{{ citaParaDetalles.celularCliente }}</span></li>
               </ul>
 
               <h6 class="green-alven"><strong>Detalles del Agendamiento</strong></h6>
