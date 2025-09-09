@@ -76,6 +76,8 @@ export interface CitaUpdate {
   valorCopago?: number;
   numeroAutorizacion?: string;
   estadoResultados?: EstadoResultados;
+  examenes?: string;
+  observaciones?: string;
 }
 
 export interface ClienteAgenda {

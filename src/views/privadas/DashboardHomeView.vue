@@ -180,6 +180,20 @@
                       </div>
                       <div v-else class="text-muted small">No hay horarios disponibles para este día.</div>
                     </div>
+                    <div class="col-12">
+                      <label for="examenes" class="form-label">Exámenes</label>
+                      <textarea id="examenes" name="examenes" rows="3"
+                                placeholder="Ej: cuadro hemático, perfil lipídico, etc."
+                                class="form-control"
+                                v-model="editFormData.examenes"></textarea>
+                    </div>
+                    <div class="col-12">
+                      <label for="observaciones" class="form-label">Observaciones</label>
+                      <textarea id="observaciones" name="observaciones" rows="3"
+                                placeholder="Información relevante para el servicio"
+                                class="form-control"
+                                v-model="editFormData.observaciones"></textarea>
+                    </div>
                   </div>
                 </div>
                 <!-- SECCION DE COTIZACION -->
@@ -373,7 +387,9 @@ const isSaveDisabled = computed(() => {
     normalize(editFormData.valorServicio) !== normalize(citaParaEditar.value.valorServicio) ||
     normalize(editFormData.valorCopago) !== normalize(citaParaEditar.value.valorCopago) ||
     normalize(editFormData.numeroAutorizacion) !== normalize(citaParaEditar.value.numeroAutorizacion) ||
-    normalize(editFormData.estadoResultados) !== normalize(citaParaEditar.value.estadoResultados);
+    normalize(editFormData.estadoResultados) !== normalize(citaParaEditar.value.estadoResultados) ||
+    normalize(editFormData.examenes) !== normalize(citaParaEditar.value.examenes) ||
+    normalize(editFormData.observaciones) !== normalize(citaParaEditar.value.observaciones);
 
 
   // El botón debe estar DESHABILITADO si NO se ha reagendado Y NO ha cambiado ningún dato del formulario.
@@ -432,6 +448,8 @@ function openEditModal(cita: CitaResponse) {
   editFormData.valorCopago = cita.valorCopago ?? undefined;
   editFormData.numeroAutorizacion = cita.numeroAutorizacion ?? '';
   editFormData.estadoResultados = cita.estadoResultados;
+  editFormData.examenes = cita.examenes ?? '';
+  editFormData.observaciones = cita.observaciones ?? '';
   isEditModalVisible.value = true;
 }
 
