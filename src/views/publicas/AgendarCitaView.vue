@@ -298,7 +298,28 @@ async function handleDownloadImage() {
 
 function handleSendToWhatsapp() {
   const numeroAtencion = '573015030080';
-  const mensaje = 'Hola Alven IPS, les envío el recordatorio de cita para recibir la cotización. ¡Gracias!';
+  let mensaje = 'Hola Alven IPS. Les envío el recordatorio de la cita para recibir la cotización. ¡Gracias!'
+  // Verifica si hay pacientes para procesar
+  if (pacientes.value.length > 0) {
+    // Si es solo un paciente
+    if (pacientes.value.length === 1) {
+      const primerPaciente = pacientes.value[0];
+      const nombreCompleto = `${primerPaciente.nombres} ${primerPaciente.apellidos}`;
+      const identificacion = primerPaciente.numeroIdentificacion;
+      mensaje = `Hola Alven IPS, les envío el recordatorio de cita para el paciente ${nombreCompleto} (ID: ${identificacion}) para recibir la cotización. ¡Gracias!`;
+
+      // Si es una cita grupal
+    } else {
+      // Creamos una lista de los pacientes usando map y join
+      const listaPacientes = pacientes.value.map(paciente => {
+        const nombreCompleto = `${paciente.nombres} ${paciente.apellidos}`;
+        return `- ${nombreCompleto} (ID: ${paciente.numeroIdentificacion})`;
+      }).join('\n'); // Unimos cada paciente con un salto de línea
+
+      mensaje = `Hola Alven IPS, les envío el recordatorio de una cita grupal para los siguientes pacientes:\n\n${listaPacientes}\n\nQuedamos atentos a la cotización. ¡Gracias!`;
+    }
+  }
+
   const url = `https://wa.me/${numeroAtencion}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
 }
