@@ -18,6 +18,15 @@ export type FormaPago =
   | 'DATAFONO'
   | 'NO_DEFINIDO';
 
+export const motivosCancelacion = {
+  'SE_REALIZO_EL_SERVICIO' : 'Ya se realizó el servicio',
+  'ALTO_VALOR' : 'Alto valor de cotización',
+  'PERSONALES' : 'Motivos personales',
+  'NO_CUMPLE' : 'No cumple las condiciones pre-analíticas',
+  'REPROGRAMACION' : 'Reprogramación No Definida',
+  'OTRO' : 'Otro (especificar)...',
+} as const;
+
 export type EstadoResultados = 'ENTREGADOS' | 'PENDIENTE' | 'PARCIAL';
 
 export interface CitaRequest {
@@ -57,6 +66,7 @@ export interface CitaResponse {
   barrio: string;
   examenes: string;
   estado: EstadoCita;
+  motivoCancelacion?: string | null;
   creadaEn: string;
   fotoPublicId?: string | null;
   // --- Nuevos campos ---

@@ -272,6 +272,7 @@
                 <li class="list-group-item"><strong>Tipo de Atención:</strong> <span class="red-alven">{{ citaParaDetalles.tipoAtencion }}</span></li>
                 <li class="list-group-item"><strong>Forma de Pago:</strong> {{ citaParaDetalles.formaPago }}</li>
                 <li v-if="citaParaDetalles.observaciones" class="list-group-item"><strong>Observaciones:</strong> {{ citaParaDetalles.observaciones }}</li>
+                <li class="list-group-item" v-if="citaParaDetalles.estado === 'CANCELADA' "><strong>Motivo de Cancelación:</strong> {{ citaParaDetalles.motivoCancelacion }}</li>
               </ul>
 
               <div v-if="citaParaDetalles.valorServicio || citaParaDetalles.valorCopago || citaParaDetalles.numeroAutorizacion">
@@ -305,6 +306,7 @@ import {
   getAvailableTimes
 } from '@/services/citasService.ts';
 import type { CitaResponse, CitaUpdate } from '@/types';
+import { motivosCancelacion } from '@/types';
 import { useInputFilter } from '@/composables/useInputFilter.ts';
 import { useAuthStore } from '@/stores/auth.ts';
 import { LISTA_SEDES } from '@/config/sedes.ts';
@@ -536,26 +538,60 @@ async function handleVerOrden(cita: CitaResponse) {
 }
 
 async function handleCancelarCita(citaId: number) {
-  const resultado = await Swal.fire({
-    title: '¿Estás seguro?',
-    text: "No podrás revertir esta acción.",
-    icon: "warning",
+  // --- INICIO DE LA CORRECCIÓN ---
+
+  const { value: motivoSeleccionado } = await Swal.fire({
+    title: 'Cancelar Cita',
+    input: 'select',
+    inputOptions: motivosCancelacion,
+    inputPlaceholder: 'Selecciona un motivo',
     showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Aceptar',
-    cancelButtonText: 'Mantener',
+    confirmButtonText: 'Siguiente &rarr;',
+    cancelButtonText: 'Mantener Cita',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#6c757d',
+    inputValidator: (value) => {
+      if (!value) {
+        return '¡Necesitas seleccionar un motivo!'
+      }
+    }
   });
-  if (resultado.isConfirmed) {
+
+  if (motivoSeleccionado) {
+    let motivoFinal: string;
+
+    if (motivoSeleccionado === 'OTRO') {
+      const { value: motivoPersonalizado, isConfirmed } = await Swal.fire({
+        title: 'Especifica el Motivo',
+        input: 'textarea',
+        inputPlaceholder: 'Escribe el motivo detallado aquí...',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar Cancelación',
+        cancelButtonText: 'Atrás',
+        confirmButtonColor: '#d33',
+      });
+
+      if (isConfirmed) {
+        // Si el usuario confirma pero no escribe nada, usamos "Otro"
+        motivoFinal = motivoPersonalizado || 'Otro';
+      } else {
+        return; // Detiene el proceso si se cancela el segundo modal
+      }
+    } else {
+      // Obtiene el texto completo del motivo seleccionado
+      motivoFinal = motivosCancelacion[motivoSeleccionado as keyof typeof motivosCancelacion];
+    }
+
+    // Procede a cancelar la cita con el motivo final
     try {
-      await cancelarCita(citaId);
+      await cancelarCita(citaId, motivoFinal);
       Swal.fire(
         '¡Cancelada!',
         'La cita ha sido cancelada con éxito.',
         'success'
       );
       fetchCitas(fechaAConsultar);
-    }catch (error) {
+    } catch (error) {
       Swal.fire(
         'Error',
         (error as Error).message,
@@ -563,6 +599,7 @@ async function handleCancelarCita(citaId: number) {
       );
     }
   }
+  // --- FIN DE LA CORRECCIÓN ---
 }
 
 async function marcarComoCompletada(citaId: number) {

@@ -119,9 +119,11 @@ export async function getUrlOrdenMedica(id: number): Promise<string> {
     throw new Error(specificMessage);
   }
 }
-export async function cancelarCita(id: number): Promise<CitaResponse> {
+export async function cancelarCita(id: number, motivo: string): Promise<CitaResponse> {
   try {
-    const response = await apiClient.post<CitaResponse>(`/citas/${id}/cancelar`);
+    const motivoCancelacion = { motivo };
+    const response = await apiClient.post<CitaResponse>(`/citas/${id}/cancelar`,
+      motivoCancelacion);
     return response.data;
   } catch(error) {
     const specificMessage = extraerErrorApi(error, 'No se pudo cancelar la cita.');
