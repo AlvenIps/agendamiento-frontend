@@ -227,6 +227,37 @@
                     </div>
                   </div>
                 </div>
+                <!-- SECCION DE ACTUALIZACION DE ORDEN MÉDICA -->
+                <div v-if="authStore.isAdmin || authStore.isAuditor" class="mt-4">
+                  <hr>
+                  <div class="mb-3">
+                    <h6 class="green-alven"><strong>Reemplazar Orden Médica</strong></h6>
+                    <p v-if="citaParaEditar?.fotoPublicId" class="small text-muted">
+                      Esta cita ya tiene una orden médica. Al subir una nueva, la anterior será reemplazada.
+                    </p>
+                    <p v-else class="small text-muted">
+                      Esta cita no tiene una orden médica adjunta.
+                    </p>
+                    <div class="input-group">
+                      <input
+                        type="file"
+                        class="form-control"
+                        @change="handleFileSelect"
+                        accept="image/*,.pdf"
+                      />
+                      <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        @click="handleReemplazarOrden"
+                        :disabled="!nuevaOrdenMedicaFile || isUploadingOrder"
+                      >
+                        <span v-if="isUploadingOrder" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <i v-else class="bi bi-upload"></i>
+                        {{ isUploadingOrder ? 'Subiendo...' : 'Subir' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
               </div>
               <div class="modal-footer">
@@ -303,7 +334,8 @@ import {
   getUrlOrdenMedica,
   cancelarCita,
   actualizarCita,
-  getAvailableTimes
+  getAvailableTimes,
+  actualizarOrdenMedica
 } from '@/services/citasService.ts';
 import type { CitaResponse, CitaUpdate } from '@/types';
 import { motivosCancelacion } from '@/types';
@@ -345,6 +377,8 @@ const isReagendarLoading = ref(false);
 // variables para el modal de DETALLES
 const isDetailsModalVisible = ref(false);
 const citaParaDetalles = ref<CitaResponse | null>(null);
+const nuevaOrdenMedicaFile = ref<File | null>(null);
+const isUploadingOrder = ref(false);
 
 // Definimos los patrones de limpieza que necesitamos.
 const soloNumerosRegex = /[^0-9]/g; // Solo permite números
@@ -464,6 +498,7 @@ function closeEditModal() {
   reagendarHorariosDisponibles.value = [];
   reagendarHoraSeleccionada.value = '';
   selectedDate.value = '';
+  nuevaOrdenMedicaFile.value = null;
 }
 
 async function handleConfirmUpdate() {
@@ -708,6 +743,49 @@ function formatTime(timeString: string): string {
     minute: '2-digit',
     hour12: true
   });
+}
+/**
+ * Captura el archivo seleccionado por el usuario desde el input.
+ */
+function handleFileSelect(event: Event) {
+  const target = event.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    nuevaOrdenMedicaFile.value = target.files[0];
+  } else {
+    nuevaOrdenMedicaFile.value = null;
+  }
+}
+
+/**
+ * Llama al servicio para reemplazar la orden médica en el backend.
+ */
+async function handleReemplazarOrden() {
+  if (!nuevaOrdenMedicaFile.value || !citaParaEditar.value) {
+    Swal.fire('Error', 'No se ha seleccionado un archivo o una cita válida.', 'error');
+    return;
+  }
+  isUploadingOrder.value = true;
+  try {
+    const citaId = citaParaEditar.value.id;
+    await actualizarOrdenMedica(citaId, nuevaOrdenMedicaFile.value);
+
+    Swal.fire({
+      icon: 'success',
+      title: '¡Éxito!',
+      text: 'La orden médica ha sido reemplazada correctamente.'
+    });
+    fetchCitas(fechaAConsultar);
+    nuevaOrdenMedicaFile.value = null;
+    // closeEditModal();
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al subir',
+      text: (error as Error).message
+    });
+  } finally {
+    isUploadingOrder.value = false;
+  }
 }
 
 

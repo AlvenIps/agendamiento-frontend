@@ -141,25 +141,17 @@ export async function actualizarCita(id: number, updateDTO: CitaUpdate ): Promis
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export async function actualizarOrdenMedica(citaId: number, nuevoArchivo: File): Promise<{ message: string }> {
+  const formData = new FormData();
+  formData.append('ordenMedicaFile', nuevoArchivo);
+  try {
+    const url = `/citas/${citaId}/orden-medica`;
+    const response = await apiClient.put<{ message: string }>(url, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error) {
+    const specificMessage = extraerErrorApi(error, 'No se pudo actualizar la orden medica.');
+    throw new Error(specificMessage);
+  }
+}
