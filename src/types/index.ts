@@ -117,6 +117,7 @@ export interface Cliente {
 }
 
 export interface ClienteUpdate {
+  numeroIdentificacion?: string;
   nombres?: string;
   apellidos?: string;
   sexo?: Sexo;

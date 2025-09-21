@@ -136,6 +136,11 @@
           <div class="modal-body">
             <form @submit.prevent="handleConfirmUpdate">
               <div class="mb-3">
+                <label for="editNumeroIdentificacion" class="form-label">Número de Identificación</label>
+                <input type="text" id="editNumeroIdentificacion" class="form-control" v-model="editFormData.numeroIdentificacion">
+                <div class="form-text">Cuidado: Cambiar este valor puede afectar futuras búsquedas.</div>
+              </div>
+              <div class="mb-3">
                 <label for="editNombres" class="form-label">Nombres</label>
                 <input type="text" id="editNombres" class="form-control" v-model="editFormData.nombres">
               </div>
@@ -174,6 +179,7 @@ import type { ClienteAgenda, Cliente, ClienteUpdate } from '@/types';
 import { useAuthStore } from '@/stores/auth.ts';
 import { LISTA_SEDES } from '@/config/sedes.ts';
 import { useInputFilter } from '@/composables/useInputFilter.ts';
+import Swal from 'sweetalert2';
 
 const authStore = useAuthStore();
 
@@ -291,6 +297,7 @@ function openEditModal(cliente: ClienteAgenda) {
   clienteParaEditar.value = { ...cliente }; // una copia para no modificar la tabla directamente
 
   //lenamos el formulario con los datos actuales del cliente
+  editFormData.numeroIdentificacion = cliente.numeroIdentificacion;
   editFormData.nombres = cliente.nombres;
   editFormData.apellidos = cliente.apellidos;
   editFormData.email = cliente.email;
@@ -308,7 +315,11 @@ async function handleConfirmUpdate() {
   isLoading.value = true;
   try {
     await updateCliente(clienteParaEditar.value.numeroIdentificacion, editFormData);
-    alert("Cliente actualizado con éxito.");
+
+    Swal.fire({
+      title: "Éxito",
+      text: "Cliente actualizado con éxito.",
+      icon: "success"});
     closeEditModal();
     fetchClientes(selectedDate.value);
   } catch (error) {
