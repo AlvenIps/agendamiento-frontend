@@ -102,7 +102,7 @@
                   <tbody>
                   <!-- Usamos v-for para crear una fila por cada cita en nuestro array -->
                   <tr v-for="cita in citasFiltradas" :key="cita.id">
-                    <td><span class="green-alven">{{ cita.fechaHoraCita }}</span></td>
+                    <td><span class="green-alven">{{ formatDateTime(cita.fechaHoraCita) }}</span></td>
                     <td v-if="authStore.isAuditor">{{ cita.nombreSede }}</td>
                     <td>{{ cita.nombreCompletoCliente }}</td>
                     <td>{{ cita.tipoIdentificacion }} {{ cita.numeroIdentificacionCliente }}</td>
@@ -328,7 +328,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, reactive } from 'vue'
+import { ref, onMounted, watch, computed, reactive, onUnmounted } from 'vue'
 import {
   getCitasPorFecha,
   getUrlOrdenMedica,
@@ -337,17 +337,21 @@ import {
   getAvailableTimes,
   actualizarOrdenMedica
 } from '@/services/citasService.ts';
-import type { CitaResponse, CitaUpdate } from '@/types';
+import type { CitaResponse, CitaUpdate } from '@/types'
 import { motivosCancelacion } from '@/types';
 import { useInputFilter } from '@/composables/useInputFilter.ts';
 import { useAuthStore } from '@/stores/auth.ts';
 import { LISTA_SEDES } from '@/config/sedes.ts';
 import { formatCurrency } from '@/utils/formatter';
-import Swal from 'sweetalert2'
+import Swal from 'sweetalert2';
+import { webSocketService } from '@/services/webSocketService';
+import { useFormatter } from '@/utils/formatter';
+const { formatDateTime } = useFormatter();
 
 const authStore = useAuthStore();
 
 const todasLasCitas = ref<CitaResponse[]>([]); // lista de citas de la API
+const nuevaCitaId = ref<number | null>(null); // ID de la CitaResponse que viene del WebSocket
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 // ESTADO PARA LOS FILTROS
@@ -441,20 +445,31 @@ const arePrepagadaFieldsRequired = computed(() => {
   return citaParaEditar.value.tipoAtencion.includes('PREPAGADA');
 });
 
-let fechaAConsultar: string = '';
 async function fetchCitas(filtro: string) {
   isLoading.value = true;
   errorMessage.value = null;
   activeFilter.value = filtro;
 
-  fechaAConsultar = (filtro !== 'today' && filtro !== 'tomorrow') ? selectedDate.value : filtro;
+  const getFormattedDate = (date: Date): string => date.toISOString().split('T')[0];
+  let fechaParaConsultar: string;
+  if (filtro === 'today') {
+    fechaParaConsultar = getFormattedDate(new Date());
+  } else if (filtro === 'tomorrow') {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    fechaParaConsultar = getFormattedDate(tomorrow);
+  } else {
+    // Si el filtro es una fecha específica (ej. "2025-10-23"), la usamos directamente.
+    fechaParaConsultar = filtro;
+  }
+  selectedDate.value = fechaParaConsultar;
 
-  if (!fechaAConsultar) {
+  if (!fechaParaConsultar) {
     isLoading.value = false;
     return;
   }
   try {
-    const data = await getCitasPorFecha(fechaAConsultar, selectedStatus.value);
+    const data = await getCitasPorFecha(fechaParaConsultar, selectedStatus.value);
     todasLasCitas.value = data;
   } catch (error) {
     errorMessage.value = (error as Error).message;
@@ -534,7 +549,7 @@ async function handleConfirmUpdate() {
       text: "Cita actualizada con éxito.",
       icon: "success",
     })
-    fetchCitas(fechaAConsultar);
+    fetchCitas(selectedDate.value);
     closeEditModal();
   } catch (error) {
     Swal.fire({
@@ -625,7 +640,7 @@ async function handleCancelarCita(citaId: number) {
         'La cita ha sido cancelada con éxito.',
         'success'
       );
-      fetchCitas(fechaAConsultar);
+      fetchCitas(selectedDate.value);
     } catch (error) {
       Swal.fire(
         'Error',
@@ -659,7 +674,7 @@ async function marcarComoCompletada(citaId: number) {
       'La cita ha sido completada con éxito.',
       'success'
     );
-    fetchCitas(fechaAConsultar);
+    fetchCitas(selectedDate.value);
   } catch (error) {
     Swal.fire(
       'Error',
@@ -689,7 +704,7 @@ async function marcarComoNoAsistio(citaId: number) {
       'La cita ha sido marcada como no asistida.',
       'success'
     );
-    fetchCitas(fechaAConsultar);
+    fetchCitas(selectedDate.value);
   } catch (error) {
     Swal.fire(
       'Error',
@@ -774,7 +789,7 @@ async function handleReemplazarOrden() {
       title: '¡Éxito!',
       text: 'La orden médica ha sido reemplazada correctamente.'
     });
-    fetchCitas(fechaAConsultar);
+    fetchCitas(selectedDate.value);
     nuevaOrdenMedicaFile.value = null;
     // closeEditModal();
   } catch (error) {
@@ -787,10 +802,51 @@ async function handleReemplazarOrden() {
     isUploadingOrder.value = false;
   }
 }
+function handleNuevaCita(nuevaCita: CitaResponse) {
+  // --- INICIO DEL BLOQUE DE DEPURACIÓN ---
+  console.log("------------------------------------");
+  console.log("DEBUG: Mensaje WebSocket Recibido");
+  console.log("Cita Completa:", nuevaCita);
+
+  const fechaCitaRecibida = nuevaCita.fechaHoraCita.split('T')[0];
+  console.log("Fecha de la cita recibida (string):", fechaCitaRecibida);
+  console.log("Fecha seleccionada en el panel (ref):", selectedDate.value);
+  // --- FIN DEL BLOQUE DE DEPURACIÓN ---
+  if (fechaCitaRecibida !== selectedDate.value) {
+    console.log("RESULTADO: Las fechas no coinciden. Se ignora la actualización.");
+    return; // Si no es para hoy, no hacemos nada
+  }
+  console.log("RESULTADO: ¡Las fechas coinciden! Actualizando la tabla...");
 
 
-onMounted(() => {
+  // 2. AÑADIR la nueva cita a la lista reactiva
+  todasLasCitas.value.push(nuevaCita);
+
+  // 3. REORGANIZAR la lista para que quede ordenada por hora
+  todasLasCitas.value.sort((a, b) =>
+    new Date(a.fechaHoraCita).getTime() - new Date(b.fechaHoraCita).getTime()
+  );
+
+  // 4. RESALTAR la nueva fila en la UI
+  nuevaCitaId.value = nuevaCita.id; // Asumiendo que CitaResponse tiene un 'id'
+  setTimeout(() => {
+    nuevaCitaId.value = null;
+  }, 3000);
+}
+
+
+onMounted(async () => {
   fetchCitas('today');
+
+  try {
+    await webSocketService.connect();
+    webSocketService.subscribe<CitaResponse>('/topic/citas_nuevas', handleNuevaCita);
+  } catch (error) {
+    console.error("Dashboard: No se pudo conectar al WebSocket", error);
+  }
+});
+onUnmounted(() => {
+  webSocketService.disconnect();
 });
 </script>
 
@@ -818,5 +874,22 @@ onMounted(() => {
 }
 .filter-panel-body {
   min-width: 440px;
+}
+
+.fila-nueva {
+  /* Le decimos a la fila que ejecute nuestra animación */
+  animation: resaltar-fila 2s ease-out;
+}
+
+/* Definimos la animación paso a paso */
+@keyframes resaltar-fila {
+  /* Al principio (0%), la fila tiene un fondo de color */
+  from {
+    background-color: #b8daff;
+  }
+  /* Al final (100%), el fondo es transparente */
+  to {
+    background-color: transparent;
+  }
 }
 </style>
