@@ -1,13 +1,20 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
+// 1. Leemos la URL desde las variables de entorno de Vite.
+const wsUrl = import.meta.env.VITE_WEBSOCKET_URL as string;
+// Es una buena práctica verificar que la variable exista.
+if (!wsUrl) {
+  throw new Error("La URL del WebSocket (VITE_WEBSOCKET_URL) no está definida en el archivo .env");
+}
+
 class WebSocketService {
   private stompClient: Client;
   private isConnected = false;
 
-  constructor(private url: string) {
+  constructor() {
     this.stompClient = new Client({
-      webSocketFactory: () => new SockJS(this.url),
+      webSocketFactory: () => new SockJS(wsUrl),
       debug: (str) => console.log(new Date(), str),
       reconnectDelay: 5000,
     });
@@ -66,4 +73,4 @@ class WebSocketService {
 }
 
 // Exportamos una única instancia del servicio (patrón Singleton)
-export const webSocketService = new WebSocketService('http://localhost:8080/ws');
+export const webSocketService = new WebSocketService();
