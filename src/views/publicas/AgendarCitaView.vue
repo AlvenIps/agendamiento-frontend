@@ -319,7 +319,6 @@ function handleSendToWhatsapp() {
       mensaje = `Hola Alven IPS, les envío el recordatorio de una cita grupal para los siguientes pacientes:\n\n${listaPacientes}\n\nQuedamos atentos a la cotización. ¡Gracias!`;
     }
   }
-
   const url = `https://wa.me/${numeroAtencion}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
 }

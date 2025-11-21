@@ -114,7 +114,7 @@
                       <template v-if="authStore.isAuditor || cita.nombreSede === authStore.user?.sede">
                         <button @click="openEditModal(cita)" class="btn btn-sm btn-outline-warning" title="Reagendar"><i class="bi bi-pencil-fill"></i></button>
                         <button v-if="cita.estado === 'AGENDADA'" @click="handleCancelarCita(cita.id)" class="btn btn-sm btn-outline-danger" title="Cancelar"><i class="bi bi-trash-fill"></i></button>
-                        <button v-if="cita.estado === 'AGENDADA'" @click="marcarComoCompletada(cita.id)" class="btn btn-sm btn-outline-success" title="Marcar como Cmpletada">
+                        <button v-if="cita.estado === 'AGENDADA'" @click="marcarComoCompletada(cita.id, cita.celularCliente)" class="btn btn-sm btn-outline-success" title="Marcar como Cmpletada">
                           <i class="bi bi-check-lg"></i>
                         </button>
                         <button v-if="cita.estado === 'AGENDADA'" @click="marcarComoNoAsistio(cita.id)" class="btn btn-sm btn-outline-secondary" title="Marcar como No Asistió">
@@ -652,7 +652,7 @@ async function handleCancelarCita(citaId: number) {
   // --- FIN DE LA CORRECCIÓN ---
 }
 
-async function marcarComoCompletada(citaId: number) {
+async function marcarComoCompletada(citaId: number, celularCliente: string) {
   const resultado = await Swal.fire({
     title: '¿Estás seguro?',
     text: "No podrás revertir esta acción.",
@@ -669,6 +669,12 @@ async function marcarComoCompletada(citaId: number) {
   };
   try {
     await actualizarCita(citaId, updateDTO);
+    const mensaje = encodeURIComponent(
+      '*Estimado usuario, sus resultados se encuentran en procesamiento, recuerde que puede consultar sus resultados en nuestra página web www.alvenips.com o solicitarlos a nuestra línea 3106338433*'
+    );
+    const numeroLimpio = celularCliente.replace(/\D/g, '');
+    const urlWhatsApp = `https://wa.me/57${numeroLimpio}?text=${mensaje}`;
+    window.open(urlWhatsApp, '_blank');
     Swal.fire(
       '¡Completada!',
       'La cita ha sido completada con éxito.',
@@ -803,22 +809,12 @@ async function handleReemplazarOrden() {
   }
 }
 function handleNuevaCita(nuevaCita: CitaResponse) {
-  // --- INICIO DEL BLOQUE DE DEPURACIÓN ---
-  console.log("------------------------------------");
-  console.log("DEBUG: Mensaje WebSocket Recibido");
-  console.log("Cita Completa:", nuevaCita);
 
   const fechaCitaRecibida = nuevaCita.fechaHoraCita.split('T')[0];
-  console.log("Fecha de la cita recibida (string):", fechaCitaRecibida);
-  console.log("Fecha seleccionada en el panel (ref):", selectedDate.value);
   // --- FIN DEL BLOQUE DE DEPURACIÓN ---
   if (fechaCitaRecibida !== selectedDate.value) {
-    console.log("RESULTADO: Las fechas no coinciden. Se ignora la actualización.");
     return; // Si no es para hoy, no hacemos nada
   }
-  console.log("RESULTADO: ¡Las fechas coinciden! Actualizando la tabla...");
-
-
   // 2. AÑADIR la nueva cita a la lista reactiva
   todasLasCitas.value.push(nuevaCita);
 
@@ -826,14 +822,12 @@ function handleNuevaCita(nuevaCita: CitaResponse) {
   todasLasCitas.value.sort((a, b) =>
     new Date(a.fechaHoraCita).getTime() - new Date(b.fechaHoraCita).getTime()
   );
-
   // 4. RESALTAR la nueva fila en la UI
   nuevaCitaId.value = nuevaCita.id; // Asumiendo que CitaResponse tiene un 'id'
   setTimeout(() => {
     nuevaCitaId.value = null;
   }, 3000);
 }
-
 
 onMounted(async () => {
   fetchCitas('today');
