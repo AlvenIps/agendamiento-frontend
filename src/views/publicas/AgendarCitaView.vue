@@ -543,9 +543,11 @@ const soloLetras = (event: Event) => {
             </div>
           </div>
           <div class=" row justify-content-center">
+            <!--
             <img src="https://res.cloudinary.com/dusy4drbp/image/upload/v1756668913/alven-acredit-removebg-preview_l8zhqe.png" alt="Certificación"
                  class="img-fluid"
                  style="bottom: 1rem; right: 1rem; width: 150px; height: auto;">
+                 -->
           </div>
         </div>
       </div>
