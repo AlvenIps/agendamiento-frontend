@@ -335,6 +335,19 @@ function formatTime(timeString: string): string {
   });
 }
 
+function formatearFecha(fechaStr: string) {
+  return new Date(fechaStr).toLocaleString("es-CO", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+
+
 const soloNumeros = (event: Event) => {
   const input = event.target as HTMLInputElement;
   input.value = input.value.replace(/\D/g, '');
@@ -510,7 +523,7 @@ const soloLetras = (event: Event) => {
                   <ul class="list-group list-group-flush">
                     <li class="list-group-item"><strong>Paciente:</strong> {{ (citaAgendada as CitaResponse).nombreCompletoCliente }}</li>
                     <li class="list-group-item"><strong>Identificación:</strong> {{ (citaAgendada as CitaResponse).tipoIdentificacion }} {{ (citaAgendada as CitaResponse).numeroIdentificacionCliente }}</li>
-                    <li class="list-group-item"><strong>Fecha y Hora:</strong> {{ (citaAgendada as CitaResponse).fechaHoraCita }}</li>
+                    <li class="list-group-item"><strong>Fecha y Hora:</strong> {{ formatearFecha((citaAgendada as CitaResponse).fechaHoraCita) }}</li>
                     <li class="list-group-item"><strong>Dirección:</strong> {{ (citaAgendada as CitaResponse).direccionCita }}, {{ (citaAgendada as CitaResponse).barrio }}</li>
                     <li class="list-group-item"><strong>Sede de Atención:</strong> {{ (citaAgendada as CitaResponse).nombreSede }}</li>
                     <li class="list-group-item"><strong>Exámenes:</strong> {{ (citaAgendada as CitaResponse).examenes }}</li>
